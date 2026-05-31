@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Halaman Display Monitor</title>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4e73df">
+
     <style>
         /* --- STYLE GENERAL & RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
@@ -479,6 +483,15 @@
                             }
                         });
                 });
+        }
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[PWA]: Service Worker Aktif'))
+                    .catch(err => console.error('[PWA Error]:', err));
+            });
         }
     </script>
 </body>

@@ -1,11 +1,18 @@
 {
-  "name": "Sistem Antrian Offline",
-  "short_name": "Antrian",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "icons": [
-    { "src": "/icon.png", "sizes": "192x192", "type": "image/png" }
-  ]
+    "name": "Sistem Antrian Loket Offline",
+    "short_name": "Antrian",
+    "description": "Aplikasi Antrian Offline Loket & Display",
+    "start_url": "/",
+    "background_color": "#eef2f5",
+    "theme_color": "#4e73df",
+    "display": "standalone", 
+    "orientation": "landscape",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3408/3408506.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
 }

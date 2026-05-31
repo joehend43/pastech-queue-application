@@ -37,6 +37,14 @@
                 localStorage.removeItem('kasir_userLogin');
             }
         });
+    
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[PWA]: Service Worker Aktif'))
+                    .catch(err => console.error('[PWA Error]:', err));
+            });
+        }
     </script>
 </body>
 </html>
