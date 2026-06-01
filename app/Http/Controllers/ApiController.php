@@ -44,7 +44,7 @@ class ApiController extends Controller
             'last_login' => now()
         ]);
 
-        $dummy = Queue::first();
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
@@ -56,6 +56,9 @@ class ApiController extends Controller
         $user->update([
             'status' => 'Offline'
         ]);
+
+        $dummy = Queue::withTrashed()->first();
+        broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
     }
@@ -70,7 +73,7 @@ class ApiController extends Controller
         } else {
             $user->update(['status' => 'Online']);
         }
-        $dummy = Queue::first();
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
