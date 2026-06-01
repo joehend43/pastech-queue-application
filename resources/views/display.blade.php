@@ -228,7 +228,6 @@
                         pane.innerHTML = `
                             <div class="counter">${data.kasirName}</div>
                             <div class="number">${formattedNumber}</div>
-                            <div class="status">Dipanggil: ${formattedTime}</div>
                         `;
                     }
 
@@ -472,7 +471,6 @@
                                 pane.innerHTML = `
                                     <div class="counter">${name}</div>
                                     <div class="number">${formattedNumber}</div>
-                                    <div class="status">Dipanggil: ${formattedTime}</div>
                                 `;
                             } else {
                                 pane.innerHTML = `

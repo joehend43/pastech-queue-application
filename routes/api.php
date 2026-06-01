@@ -30,5 +30,5 @@ Route::get('/queues/call', [ApiController::class, 'callDynamic']);
 Route::get('/queues/call/{id}', [ApiController::class, 'callQueue']);
 Route::get('/queues/recall-current', [ApiController::class, 'recallCurrent']);
 Route::get('/queues/count-remaining', [ApiController::class, 'countRemainingByType']);
-Route::post('/queues/print-new', [ApiController::class, 'generateQueue']);
+Route::get('/queues/print-new', [ApiController::class, 'generateQueue']);
 Route::post('/toggle-lock-kasir', [ApiController::class, 'toggleLockKasir']);
