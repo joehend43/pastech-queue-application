@@ -234,7 +234,7 @@ class ApiController extends Controller
 
         // Format nomor (Contoh: A.005)
         $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
-        $waktuCetak = $newQueue->created_at->format('d-m-Y H:i:s');
+        $waktuCetak = now()->format('d-m-Y H:i:s');
 
         // 3. PROSES CETAK LANGSUNG (HEADLESS PRINTING)
         try {
@@ -259,7 +259,7 @@ class ApiController extends Controller
 
             // Cetak Tipe Antrian
             $printer->text(($type === 'A' ? "PEMBELIAN" : "PENGAMBILAN BARANG") . "\n");
-            
+            $printer->feed();
             // Cetak Nomor Besar
             $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             $printer->text($formattedNumber . "\n");
