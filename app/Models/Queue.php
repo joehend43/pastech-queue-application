@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -21,4 +22,20 @@ class Queue extends Model
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
     ];
+
+    protected function getCreatedAtAttribute($value)
+    {
+        return $value ? Carbon::parse($value)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') : null;
+    }
+
+    protected function getUpdatedAtAttribute($value)
+    {
+        return $value ? Carbon::parse($value)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') : null;
+    }
+
+    protected function getDeletedAtAttribute($value)
+    {
+        return $value ? Carbon::parse($value)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') : null;
+    }
 }
+

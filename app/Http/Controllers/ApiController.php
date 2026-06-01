@@ -20,7 +20,7 @@ class ApiController extends Controller
             ->where('status', '!=', 'Offline')
             ->where('type', $type)
             ->update([
-                'status' => 'Offline'
+                'status' => 'Locked'
             ]);
     }
     public function getKasir() {
@@ -229,7 +229,8 @@ class ApiController extends Controller
             'type' => $type,
             'queue_number' => $nextNumber,
             'called_at' => null,
-            'user_id' => null
+            'user_id' => null,
+            'created_at' => now(),
         ]);
 
         // Format nomor (Contoh: A.005)
