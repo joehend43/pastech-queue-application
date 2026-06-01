@@ -30,6 +30,11 @@
             const displayIsLogin = localStorage.getItem('display_isLogin');
             const displayLastLogin = localStorage.getItem('display_lastLogin');
 
+            if(kasirIsLogin && !displayIsLogin) {
+                // Jika kasir sudah login tapi display belum, arahkan ke kasir
+                window.location.href = '/kasir';
+            }
+
             // Bersihkan sesi kasir jika sudah berganti hari
             if (kasirLastLogin && kasirLastLogin.split(' ')[0] !== today) {
                 localStorage.removeItem('kasir_isLogin');
