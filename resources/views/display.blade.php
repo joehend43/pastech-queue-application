@@ -104,6 +104,8 @@
     <script>
         let indonesianVoice = null;
         let isAudioInitialized = false;
+        let ttsQueue = [];          // Menampung antrean panggilan yang masuk
+        let isTtsSpeaking = false;  // Flag penanda apakah speaker sedang sibuk berbicara
         let selectedLeftKasirId = null;
         let selectedRightKasirId = null;
         let globalKasirList = [];
@@ -149,7 +151,7 @@
             document.getElementById('audio-blocker-overlay').style.display = 'none';
         }
 
-        function speakQueue(type, number, kasirName) {
+        function speakQueueV1(type, number, kasirName) {
             if (!isAudioInitialized || !indonesianVoice) {
                 console.warn(`[TTS Skip]: initialized=${isAudioInitialized}`);
                 return;
@@ -168,6 +170,71 @@
             utterance.onerror = (e) => console.error('[TTS Error]:', e.error);
 
             window.speechSynthesis.cancel(); 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakQueue(type, number, kasirName) {
+            if (!isAudioInitialized || !indonesianVoice) {
+                console.warn(`[TTS Skip]: initialized=${isAudioInitialized}`);
+                return;
+            }
+
+            // Masukkan data panggilan baru ke barisan paling belakang
+            ttsQueue.push({ type: type, number: number, kasirName: kasirName });
+            console.log(`[TTS Queue] Masuk antrean: ${type}.${String(number).padStart(3, '0')}. Total antrean saat ini: ${ttsQueue.length}`);
+
+            // Jalankan prosesor pengecek antrean
+            processTtsQueue();
+        }
+
+        // 2. Fungsi Prosesor: Mengatur lalu lintas suara secara berurutan
+        function processTtsQueue() {
+            // Jika mesin TTS sedang berbicara, atau tidak ada antrean tersisa, kunci proses (tunggu)
+            if (isTtsSpeaking || ttsQueue.length === 0) {
+                return;
+            }
+
+            // Tandai mesin TTS mulai sibuk
+            isTtsSpeaking = true;
+
+            // Ambil data panggilan pertama di barisan paling depan (FIFO - First In First Out)
+            const currentItem = ttsQueue.shift();
+
+            console.log(`Panggilan Antrian: ${currentItem.type}.${String(currentItem.number).padStart(3, '0')} untuk ${currentItem.kasirName}`);
+            const parsedNumber = parseInt(currentItem.number, 10);
+            const textToSpeak = `Nomor Antrian ${currentItem.type}, ${parsedNumber}. Silahkan menuju ${currentItem.kasirName}.`;
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.voice = indonesianVoice;
+            utterance.rate = 0.90;
+
+            // Trigger saat suara MULAI diucapkan
+            utterance.onstart = () => {
+                console.log('%c[TTS Start]: Sedang menyuarakan...', 'color: #1cc88a; font-weight: bold;');
+            };
+
+            // Trigger saat suara SELESAI diucapkan secara tuntas
+            utterance.onend = () => {
+                console.log('%c[TTS End]: Selesai.', 'color: #4e73df; font-weight: bold;');
+                
+                // Lepas status sibuk
+                isTtsSpeaking = false;
+                
+                // Berikan jeda napas 1 detik sebelum memanggil antrean berikutnya agar tidak terlalu rapat
+                setTimeout(() => {
+                    processTtsQueue(); 
+                }, 1000);
+            };
+
+            // Trigger jika terjadi error di tengah jalan
+            utterance.onerror = (e) => {
+                console.error('[TTS Error]:', e.error);
+                isTtsSpeaking = false;
+                processTtsQueue(); // Tetap lanjutkan antrean berikutnya agar sistem tidak macet
+            };
+
+            // PENTING: Jangan gunakan window.speechSynthesis.cancel() di sini!
+            // Biarkan browser mengeksekusi objek utterance tunggal ini secara alami
             window.speechSynthesis.speak(utterance);
         }
 

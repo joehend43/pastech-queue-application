@@ -17,6 +17,6 @@ self.addEventListener('activate', (event) => {
 });
 
 // Kembalikan semua request langsung ke network server tanpa perantara cache
-self.addEventListener('fetch', (event) => {
-    return; // Bypass langsung
-});
+// self.addEventListener('fetch', (event) => {
+//     return; // Bypass langsung
+// });
