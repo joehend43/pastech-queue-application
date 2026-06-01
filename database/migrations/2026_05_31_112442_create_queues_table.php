@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('queues', function (Blueprint $table) {
             $table->id();
             $table->string('queue_number'); // Contoh: A1, B12
-            $table->enum('type', ['A', 'B']);
+            $table->enum('type', ['A', 'B','O']);
             $table->dateTime('called_at')->nullable(); // Panggilan Terakhir
             $table->unsignedBigInteger('user_id')->nullable(); // id caller (kasir)
             $table->string('caller')->nullable(); // Kasir mana yang panggil
             $table->timestamps(); // Created_at jadi Waktu Cetak
+            $table->softDeletes();
         });
     }
 

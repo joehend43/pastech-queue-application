@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Queue;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -28,5 +29,12 @@ class DatabaseSeeder extends Seeder
                 'type' => 'display',
             ]);
         }
+
+        Queue::create([
+            'id' => 0,
+            'queue_number' => 0,
+            'type' => 'O',
+            'deleted_at' => now(),
+        ]);
     }
 }
