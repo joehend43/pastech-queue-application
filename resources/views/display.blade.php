@@ -109,7 +109,37 @@
         let selectedLeftKasirId = null;
         let selectedRightKasirId = null;
         let globalKasirList = [];
-        const isBroadcastAll = {{ env('BROADCAST_DISPLAY') === 'ALL' ? 'true' : 'false' }};
+        // const isBroadcastAll = {{ env('BROADCAST_DISPLAY') === 'ALL' ? 'true' : 'false' }};
+
+        // === KONFIGURASI DINAMIS DARI LARAVEL .ENV ===
+        const broadcastMode = "{{ env('BROADCAST_DISPLAY', 'DEFAULT') }}"; // 'ALL', 'GROUP', atau 'DEFAULT'
+        
+        // Mengonversi string "1,2,3" dari env menjadi array [1, 2, 3] di JavaScript
+        const group1 = [{{ env('BROADCAST_GROUP_1', '') }}];
+        const group2 = [{{ env('BROADCAST_GROUP_2', '') }}];
+
+        // Fungsi untuk mengecek apakah Kasir yang memanggil berada dalam grup yang sama dengan monitor ini
+        function isCallerInSameGroup(calledKasirId) {
+            let monitorGroups = [];
+
+            // 1. Deteksi loket ini masuk ke grup mana saja berdasarkan kasir terpilih di URL
+            if (group1.includes(Number(selectedLeftKasirId)) || group1.includes(Number(selectedRightKasirId))) {
+                monitorGroups.push(1);
+            }
+            if (group2.includes(Number(selectedLeftKasirId)) || group2.includes(Number(selectedRightKasirId))) {
+                monitorGroups.push(2);
+            }
+
+            // 2. Cek apakah kasir yang memanggil (calledKasirId) terdaftar di dalam grup monitor tersebut
+            if (monitorGroups.includes(1) && group1.includes(Number(calledKasirId))) {
+                return true;
+            }
+            if (monitorGroups.includes(2) && group2.includes(Number(calledKasirId))) {
+                return true;
+            }
+
+            return false;
+        }
 
         document.addEventListener("DOMContentLoaded", function() {
             checkState();
@@ -306,10 +336,19 @@
                 // 2. LOGIKA AUDIO TTS (Bypass langsung jika BROADCAST_DISPLAY="ALL")
                 // ------------------------------------------------------------
                 const isKasirTercatatDiMonitor = (calledKasirId == selectedLeftKasirId || calledKasirId == selectedRightKasirId);
+                let shouldSpeak = false;
 
-                if (isKasirTercatatDiMonitor || isBroadcastAll) {
-                    console.log(`[TTS Triggered] Memasukkan suara ke antrean. Mode Broadcast All: ${isBroadcastAll}`);
-                    // Mainkan Audio Panggilan melalui sistem antrean anti-bentrok yang sudah kita buat
+                if (broadcastMode === 'ALL') {
+                    shouldSpeak = true; // Panggil semua tanpa pandang bulu
+                } else if (broadcastMode === 'GROUP') {
+                    // Jika mode GROUP aktif, bunyikan jika kasir tercatat di layar ATAU berada dalam satu ikatan grup
+                    shouldSpeak = isKasirTercatatDiMonitor || isCallerInSameGroup(calledKasirId);
+                } else {
+                    shouldSpeak = isKasirTercatatDiMonitor; // Default: Hanya bunyikan yang tampil di monitor saja
+                }
+
+                if (shouldSpeak) {
+                    console.log(`[TTS Queue] Memasukkan suara ${data.queue.type}.${data.queue.queue_number} ke antrian.`);
                     speakQueue(data.queue.type, data.queue.queue_number, data.kasirName);
                 }
             });
