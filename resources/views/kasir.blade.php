@@ -65,7 +65,7 @@
         .btn-repeat-current:hover { background: #4e73df; color: #fff; }
 
         /* Kartu Kanan (Dua Tombol Panggil) */
-        .call-btn-container { flex: 2; display: flex; flex-direction: column; gap: 20px; }
+        .call-btn-container { flex: 2; display: flex; flex-direction: column; gap: 20px; justify-content: center;}
         .call-btn { width: 100%; border: none; border-radius: 24px; padding: 26px 30px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; }
         .call-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05); }
         .call-green { background: #ecfdf3; border: 1px solid #bbf7d0; color: #15803d; }
@@ -168,7 +168,7 @@
                     <svg width="28" height="28" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
                 </button>
 
-                <button class="call-btn call-blue" onclick="callNext('next_pickup')">
+                <button id="btn-pickup-container" class="call-btn call-blue" onclick="callNext('next_pickup')">
                     <div class="call-left">
                         <div class="call-icon icon-blue">
                             <svg width="32" height="32" fill="currentColor" viewBox="0 0 16 16"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l6.5 2.6a1 1 0 0 1 0 1.854l-6.5 2.6a1.5 1.5 0 0 1-1.114 0l-6.5-2.6a1 1 0 0 1 0-1.854l6.5-2.6z"/></svg>
@@ -293,6 +293,21 @@
             
             const user = JSON.parse(localStorage.getItem('kasir_userLogin'));
             document.getElementById('txt-welcome-kasir').innerText = `Dashboard ${user.name}`;
+
+            // ------------------------------------------------------------
+            // LOGIKA FILTER HIDE TOMBOL PICKUP (KASIR ID 1, 2, 3)
+            // ------------------------------------------------------------
+            const pickupButton = document.getElementById('btn-pickup-container');
+            if (pickupButton) {
+                // Lakukan konversi ke tipe Number untuk memastikan perbandingan angka valid
+                const userId = Number(user.id);
+                if (userId >= 1 && userId <= 3) {
+                    pickupButton.classList.add('hidden'); // Sembunyikan tombol secara absolut
+                } else {
+                    pickupButton.classList.remove('hidden'); // Pastikan tetap muncul untuk kasir lainnya
+                }
+            }
+            
             loadQueueTable();
         }
 
