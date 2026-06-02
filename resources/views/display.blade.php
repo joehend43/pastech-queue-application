@@ -109,6 +109,7 @@
         let selectedLeftKasirId = null;
         let selectedRightKasirId = null;
         let globalKasirList = [];
+        const isBroadcastAll = {{ env('BROADCAST_DISPLAY') === 'ALL' ? 'true' : 'false' }};
 
         document.addEventListener("DOMContentLoaded", function() {
             checkState();
@@ -281,7 +282,9 @@
 
                 const calledKasirId = data.queue.user_id;
 
-                // Validasi apakah Kasir yang memanggil aktif di layar ini
+                // ------------------------------------------------------------
+                // 1. LOGIKA VISUAL PANEL (Hanya berubah jika Kasir cocok dengan parameter URL)
+                // ------------------------------------------------------------
                 if (calledKasirId == selectedLeftKasirId || calledKasirId == selectedRightKasirId) {
                     const isLeft = (calledKasirId == selectedLeftKasirId);
                     const elementId = isLeft ? 'pane-left' : 'pane-right';
@@ -297,8 +300,16 @@
                             <div class="number">${formattedNumber}</div>
                         `;
                     }
+                }
 
-                    // Mainkan Audio Panggilan Sentralisasi
+                // ------------------------------------------------------------
+                // 2. LOGIKA AUDIO TTS (Bypass langsung jika BROADCAST_DISPLAY="ALL")
+                // ------------------------------------------------------------
+                const isKasirTercatatDiMonitor = (calledKasirId == selectedLeftKasirId || calledKasirId == selectedRightKasirId);
+
+                if (isKasirTercatatDiMonitor || isBroadcastAll) {
+                    console.log(`[TTS Triggered] Memasukkan suara ke antrean. Mode Broadcast All: ${isBroadcastAll}`);
+                    // Mainkan Audio Panggilan melalui sistem antrean anti-bentrok yang sudah kita buat
                     speakQueue(data.queue.type, data.queue.queue_number, data.kasirName);
                 }
             });
