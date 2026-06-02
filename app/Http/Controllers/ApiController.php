@@ -72,7 +72,7 @@ class ApiController extends Controller
         if ($action === 'lock') {
             $user->update(['status' => 'Locked']);
         } else {
-            $user->update(['status' => 'Online']);
+            $user->update(['status' => 'Online', 'last_login' => now()]);
         }
         $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
@@ -82,13 +82,14 @@ class ApiController extends Controller
 
     public function getQueues() {
         // Mengambil antrian hari ini yang berjalan
-        return DB::transaction(function (){
+        $queues = DB::transaction(function (){
             $queues = Queue::whereDate('created_at', now()->toDateString())
                 ->orderBy('created_at', 'desc')
                 ->get();
                 
-            return response()->json($queues);
+            return $queues;
         });
+        return response()->json($queues);
     }
 
     public function getLatestQueues() {
