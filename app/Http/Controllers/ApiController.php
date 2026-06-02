@@ -249,7 +249,7 @@ class ApiController extends Controller
 
             // Format nomor (Contoh: A.005)
             $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
-            $waktuCetak = now()->format('d-m-Y H:i:s');
+            $waktuCetak = now()->format('d/m/Y H:i:s');
 
             // 3. PROSES CETAK LANGSUNG (HEADLESS PRINTING)
             try {
@@ -265,15 +265,10 @@ class ApiController extends Controller
 
                 // --- Mulai Desain Struk Thermal ---
                 $printer->setJustification(Printer::JUSTIFY_CENTER);
-                // $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
-                // $printer->text("KANTOR LAYANAN\n");
-                // $printer->selectPrintMode(); // Reset font ke normal
-                // $printer->text("Sistem Antrian Offline\n");
-                // $printer->text("--------------------------------\n");
-                // $printer->feed();
 
                 // Cetak Tipe Antrian
-                $printer->text(($type === 'A' ? "PEMBELIAN" : "PENGAMBILAN BARANG") . "\n");
+                $printer->text(($type === 'A' ? "PEMBELIAN " : "PENGAMBILAN BARANG "));
+                $printer->text($waktuCetak ."\n");
                 $printer->feed();
                 // Cetak Nomor Besar
                 $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
@@ -281,10 +276,9 @@ class ApiController extends Controller
                 $printer->selectPrintMode(); // Reset
                 
                 $printer->feed();
-                $printer->text("Mohon tiket disertakan saat nomor dipanggil.\n");
-                $printer->text("--------------------------------\n");
-                $printer->text("Waktu: " . $waktuCetak . "\n");
-                $printer->feed(2); // Kasih jarak potongan kertas
+                $printer->text("MOHON TIKET DISERTAKAN SAAT NOMER \n DIPANGGIL (PASTECH01).\n");
+                
+                // $printer->feed(2); // Kasih jarak potongan kertas
                 
                 // Perintah potong kertas (Auto-cutter) jika printer mendukung
                 $printer->cut();
