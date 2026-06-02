@@ -6,6 +6,7 @@ set "CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe"
 start "" "%CHROME_PATH%" ^
 --new-window ^
 --disable-gpu ^
+--autoplay-policy=no-user-gesture-required ^
 "%URL%"
 
 timeout /t 3 /nobreak >nul
