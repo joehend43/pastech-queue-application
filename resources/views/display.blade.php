@@ -88,13 +88,13 @@
     </div>
 
     <div id="state-3" class="hidden" style="margin: -20px;">
-        <div id="audio-blocker-overlay" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(78, 115, 223, 0.95); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
+        <!-- <div id="audio-blocker-overlay" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(78, 115, 223, 0.95); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
             <h1 style="font-size: 3rem; margin-bottom: 20px;">Monitor Display Belum Siap</h1>
             <p style="font-size: 1.5rem; margin-bottom: 30px;">Browser memblokir audio otomatis sebelum ada interaksi.</p>
             <button class="btn-base" style="background: #1cc88a; color: white; padding: 20px 40px; font-size: 1.8rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" onclick="unlockDisplayAudio()">
                 AKTIFKAN SUARA & MONITOR
             </button>
-        </div>
+        </div> -->
 
         <div id="connection-dot" title="Menghubungkan ke WebSocket..."></div>
 
