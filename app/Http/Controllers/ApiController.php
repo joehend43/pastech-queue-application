@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\QueueCalled;
+use DB;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Queue;
@@ -81,20 +82,24 @@ class ApiController extends Controller
 
     public function getQueues() {
         // Mengambil antrian hari ini yang berjalan
-        $queues = Queue::whereDate('created_at', now()->toDateString())
-            ->orderBy('created_at', 'desc')
-            ->get();
-            
-        return response()->json($queues);
+        return DB::transaction(function (){
+            $queues = Queue::whereDate('created_at', now()->toDateString())
+                ->orderBy('created_at', 'desc')
+                ->get();
+                
+            return response()->json($queues);
+        });
     }
 
     public function getLatestQueues() {
         // Mengambil antrian hari ini yang berjalan
-        $queues = Queue::whereDate('created_at', now()->toDateString())
-            ->orderBy('called_at', 'desc')
-            ->get();
-            
-        return response()->json($queues);
+        return DB::transaction(function (){
+            $queues = Queue::whereDate('created_at', now()->toDateString())
+                ->orderBy('called_at', 'desc')
+                ->get();
+                
+            return response()->json($queues);
+        });
     }
 
     public function callDynamic(Request $request){
@@ -114,98 +119,106 @@ class ApiController extends Controller
     public function callNext(Request $request, $type='A')
     {
         $userId = $request->user_id;
-        $userKasir = User::findOrFail($userId);
+        return DB::transaction(function () use($userId, $type) {
+            $userKasir = User::findOrFail($userId);
 
-        $nextQueue = Queue::whereDate('created_at', now()->toDateString())
-            ->whereNull('called_at')
-            ->where('type', $type)
-            ->orderBy('created_at', 'asc')
-            ->first();
-        $typeDisplay = ($type === 'A') ? 'Pembelian' : 'Pengambilan';
-        if (!$nextQueue) {
-            return response()->json(['message' => 'Antrian ' . $typeDisplay . ' saat ini sudah habis'], 404);
-        }
+            $nextQueue = Queue::whereDate('created_at', now()->toDateString())
+                ->whereNull('called_at')
+                ->where('type', $type)
+                ->orderBy('created_at', 'asc')
+                ->first();
+            $typeDisplay = ($type === 'A') ? 'Pembelian' : 'Pengambilan';
+            if (!$nextQueue) {
+                return response()->json(['message' => 'Antrian ' . $typeDisplay . ' saat ini sudah habis'], 404);
+            }
 
-        $nextQueue->update([
-            'called_at' => now(),
-            'user_id' => $userId,
-            'caller' => $userKasir->name
-        ]);
+            $nextQueue->update([
+                'called_at' => now(),
+                'user_id' => $userId,
+                'caller' => $userKasir->name
+            ]);
 
-        // AMBIL SIKNAL & LEMPAR KE REVERB
-        broadcast(new QueueCalled($nextQueue, $userKasir->name))->toOthers();
+            // AMBIL SIKNAL & LEMPAR KE REVERB
+            broadcast(new QueueCalled($nextQueue, $userKasir->name))->toOthers();
 
-        return response()->json($nextQueue);
+            return response()->json($nextQueue);
+        });
     }
 
     public function recallCurrent(Request $request)
     {
         // 1. Ambil user_id kasir dari query parameter GET
         $userId = $request->query('user_id');
-        $userKasir = User::findOrFail($userId);
+        return DB::transaction(function () use($userId) {
+            $userKasir = User::findOrFail($userId);
 
-        // 2. Cari antrian terakhir hari ini yang SUDAH dipanggil oleh kasir ini
-        $currentQueue = Queue::whereDate('created_at', now()->toDateString())
-            ->whereNotNull('called_at')
-            ->where('user_id', $userId)
-            ->orderBy('called_at', 'desc') // Mengambil panggilan paling terbaru
-            ->first();
+            // 2. Cari antrian terakhir hari ini yang SUDAH dipanggil oleh kasir ini
+            $currentQueue = Queue::whereDate('created_at', now()->toDateString())
+                ->whereNotNull('called_at')
+                ->where('user_id', $userId)
+                ->orderBy('called_at', 'desc') // Mengambil panggilan paling terbaru
+                ->first();
 
-        // 3. Jika kasir belum pernah memanggil antrian sama sekali hari ini
-        if (!$currentQueue) {
-            return response()->json([
-                'message' => 'Anda belum memanggil antrian apa pun hari ini.'
-            ], 404);
-        }
+            // 3. Jika kasir belum pernah memanggil antrian sama sekali hari ini
+            if (!$currentQueue) {
+                return response()->json([
+                    'message' => 'Anda belum memanggil antrian apa pun hari ini.'
+                ], 404);
+            }
 
-        // 4. Update kembali kolom called_at ke waktu sekarang (untuk menyegarkan urutan di display)
-        $currentQueue->update([
-            'called_at' => now(),
-        ]);
+            // 4. Update kembali kolom called_at ke waktu sekarang (untuk menyegarkan urutan di display)
+            $currentQueue->update([
+                'called_at' => now(),
+            ]);
 
-        // 5. Broadcast ke Reverb agar Monitor Display memicu suara TTS ulang
-        broadcast(new QueueCalled($currentQueue, $userKasir->name))->toOthers();
+            // 5. Broadcast ke Reverb agar Monitor Display memicu suara TTS ulang
+            broadcast(new QueueCalled($currentQueue, $userKasir->name))->toOthers();
 
-        return response()->json($currentQueue);
+            return response()->json($currentQueue);
+        });
     }
 
     public function callQueue(Request $request, $id)
     {
-        $queue = Queue::findOrFail($id);
-        $userId = $request->query('user_id');
-        $kasir = User::findOrFail($userId);
-        // Update waktu panggil terakhir dan siapa yang memanggil
-        $queue->update([
-            'called_at' => now(),
-            'user_id' => $kasir->id,
-            'caller' => $kasir->name
-        ]);
+        return DB::transaction(function () use($request, $id) {
+            $queue = Queue::findOrFail($id);
+            $userId = $request->query('user_id');
+            $kasir = User::findOrFail($userId);
+            // Update waktu panggil terakhir dan siapa yang memanggil
+            $queue->update([
+                'called_at' => now(),
+                'user_id' => $kasir->id,
+                'caller' => $kasir->name
+            ]);
 
-        // Broadcast ke Reverb agar Monitor Display memicu suara TTS
-        broadcast(new QueueCalled($queue, $kasir->name))->toOthers();
+            // Broadcast ke Reverb agar Monitor Display memicu suara TTS
+            broadcast(new QueueCalled($queue, $kasir->name))->toOthers();
 
-        return response()->json([
-            'status' => 'Success',
-            'message' => 'Antrian berhasil dipanggil ulang',
-            'data' => $queue
-        ]);
+            return response()->json([
+                'status' => 'Success',
+                'message' => 'Antrian berhasil dipanggil ulang',
+                'data' => $queue
+            ]);
+        });
     }
 
 
 
-    public function countRemainingByType(Request $request)
+    public function countRemainingByType()
     {
-        $countA = Queue::whereDate('created_at', now()->toDateString())
-            ->whereNull('called_at')
-            ->where('type', 'A')
-            ->count();
+        return DB::transaction(function () {
+            $countA = Queue::whereDate('created_at', now()->toDateString())
+                ->whereNull('called_at')
+                ->where('type', 'A')
+                ->count();
 
-        $countB = Queue::whereDate('created_at', now()->toDateString())
-            ->whereNull('called_at')
-            ->where('type', 'B')
-            ->count();
+            $countB = Queue::whereDate('created_at', now()->toDateString())
+                ->whereNull('called_at')
+                ->where('type', 'B')
+                ->count();
 
-        return response()->json(['A' => $countA, 'B' => $countB]);
+            return response()->json(['A' => $countA, 'B' => $countB]);
+        });
     }
 
     public function generateQueue(Request $request)
@@ -216,85 +229,124 @@ class ApiController extends Controller
             return response()->json(['message' => 'Tipe antrian tidak valid'], 400);
         }
 
-        // 1. Ambil nomor antrian selanjutnya (Increment)
-        $lastQueue = Queue::whereDate('created_at', now()->toDateString())
-            ->where('type', $type)
-            ->orderBy('queue_number', 'desc')
-            ->first();
+        return DB::transaction(function () use ($type) {
+            // 1. Ambil nomor antrian selanjutnya (Increment)
+            $lastQueue = Queue::whereDate('created_at', now()->toDateString())
+                ->where('type', $type)
+                ->orderBy('queue_number', 'desc')
+                ->first();
 
-        $nextNumber = $lastQueue ? ($lastQueue->queue_number + 1) : 1;
+            $nextNumber = $lastQueue ? ($lastQueue->queue_number + 1) : 1;
 
-        // 2. Simpan data antrian ke DB
-        $newQueue = Queue::create([
-            'type' => $type,
-            'queue_number' => $nextNumber,
-            'called_at' => null,
-            'user_id' => null,
-            'created_at' => now(),
-        ]);
+            // 2. Simpan data antrian ke DB
+            $newQueue = Queue::create([
+                'type' => $type,
+                'queue_number' => $nextNumber,
+                'called_at' => null,
+                'user_id' => null,
+                'created_at' => now(),
+            ]);
 
-        // Format nomor (Contoh: A.005)
-        $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
-        $waktuCetak = now()->format('d-m-Y H:i:s');
+            // Format nomor (Contoh: A.005)
+            $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
+            $waktuCetak = now()->format('d-m-Y H:i:s');
 
-        // 3. PROSES CETAK LANGSUNG (HEADLESS PRINTING)
-        try {
-            // Tentukan konektor berdasarkan konfigurasi .env
-            if (env('PRINTER_CONNECTION_TYPE') === 'network') {
-                $connector = new NetworkPrintConnector(env('PRINTER_IP'), env('PRINTER_PORT', 9100));
-            } else {
-                // Standar Windows USB Sharing
-                $connector = new WindowsPrintConnector(env('PRINTER_NAME'));
+            // 3. PROSES CETAK LANGSUNG (HEADLESS PRINTING)
+            try {
+                // Tentukan konektor berdasarkan konfigurasi .env
+                if (env('PRINTER_CONNECTION_TYPE') === 'network') {
+                    $connector = new NetworkPrintConnector(env('PRINTER_IP'), env('PRINTER_PORT', 9100));
+                } else {
+                    // Standar Windows USB Sharing
+                    $connector = new WindowsPrintConnector(env('PRINTER_NAME'));
+                }
+
+                $printer = new Printer($connector);
+
+                // --- Mulai Desain Struk Thermal ---
+                $printer->setJustification(Printer::JUSTIFY_CENTER);
+                // $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+                // $printer->text("KANTOR LAYANAN\n");
+                // $printer->selectPrintMode(); // Reset font ke normal
+                // $printer->text("Sistem Antrian Offline\n");
+                // $printer->text("--------------------------------\n");
+                // $printer->feed();
+
+                // Cetak Tipe Antrian
+                $printer->text(($type === 'A' ? "PEMBELIAN" : "PENGAMBILAN BARANG") . "\n");
+                $printer->feed();
+                // Cetak Nomor Besar
+                $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+                $printer->text($formattedNumber . "\n");
+                $printer->selectPrintMode(); // Reset
+                
+                $printer->feed();
+                $printer->text("Mohon tiket disertakan saat nomor dipanggil.\n");
+                $printer->text("--------------------------------\n");
+                $printer->text("Waktu: " . $waktuCetak . "\n");
+                $printer->feed(2); // Kasih jarak potongan kertas
+                
+                // Perintah potong kertas (Auto-cutter) jika printer mendukung
+                $printer->cut();
+                
+                // Tutup koneksi printer
+                $printer->close();
+
+            } catch (\Exception $e) {
+                // Log error jika printer mati / tidak terhubung agar API tidak crash sepenuhnya
+                \Log::error("Gagal mencetak struk antrian: " . $e->getMessage());
+                return response()->json([
+                    'status' => 'Warning',
+                    'message' => 'Antrian tersimpan di DB, tapi gagal cetak fisik.',
+                    'error' => $e->getMessage()
+                ], 500);
             }
 
-            $printer = new Printer($connector);
-
-            // --- Mulai Desain Struk Thermal ---
-            $printer->setJustification(Printer::JUSTIFY_CENTER);
-            // $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
-            // $printer->text("KANTOR LAYANAN\n");
-            // $printer->selectPrintMode(); // Reset font ke normal
-            // $printer->text("Sistem Antrian Offline\n");
-            // $printer->text("--------------------------------\n");
-            // $printer->feed();
-
-            // Cetak Tipe Antrian
-            $printer->text(($type === 'A' ? "PEMBELIAN" : "PENGAMBILAN BARANG") . "\n");
-            $printer->feed();
-            // Cetak Nomor Besar
-            $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
-            $printer->text($formattedNumber . "\n");
-            $printer->selectPrintMode(); // Reset
-            
-            $printer->feed();
-            $printer->text("Mohon tiket disertakan saat nomor dipanggil.\n");
-            $printer->text("--------------------------------\n");
-            $printer->text("Waktu: " . $waktuCetak . "\n");
-            $printer->feed(2); // Kasih jarak potongan kertas
-            
-            // Perintah potong kertas (Auto-cutter) jika printer mendukung
-            $printer->cut();
-            
-            // Tutup koneksi printer
-            $printer->close();
-
-        } catch (\Exception $e) {
-            // Log error jika printer mati / tidak terhubung agar API tidak crash sepenuhnya
-            \Log::error("Gagal mencetak struk antrian: " . $e->getMessage());
+            // Kembalikan respons sukses ke device pengirim hit API
             return response()->json([
-                'status' => 'Warning',
-                'message' => 'Antrian tersimpan di DB, tapi gagal cetak fisik.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+                'status' => 'Success',
+                'data' => [
+                    'id' => $newQueue->id,
+                    'formatted' => $formattedNumber
+                ]
+            ]);
+        });
+    }
 
-        // Kembalikan respons sukses ke device pengirim hit API
-        return response()->json([
-            'status' => 'Success',
-            'data' => [
-                'id' => $newQueue->id,
-                'formatted' => $formattedNumber
-            ]
-        ]);
+    public function createQueue(Request $request)
+    {
+        $type = $request->input('type'); // Menerima 'A' atau 'B'
+        
+        if (!in_array($type, ['A', 'B'])) {
+            return response()->json(['message' => 'Tipe antrian tidak valid'], 400);
+        }
+        return DB::transaction(function () use ($type) {
+            // 1. Ambil nomor antrian selanjutnya (Increment)
+            $lastQueue = Queue::whereDate('created_at', now()->toDateString())
+                ->where('type', $type)
+                ->orderBy('queue_number', 'desc')
+                ->first();
+
+            $nextNumber = $lastQueue ? ($lastQueue->queue_number + 1) : 1;
+
+            // 2. Simpan data antrian ke DB
+            $newQueue = Queue::create([
+                'type' => $type,
+                'queue_number' => $nextNumber,
+                'called_at' => null,
+                'user_id' => null,
+                'created_at' => now(),
+            ]);
+            // Format nomor (Contoh: A.005)
+            $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
+
+            return response()->json([
+                'status' => 'Success',
+                'data' => [
+                    'id' => $newQueue->id,
+                    'formatted' => $formattedNumber
+                ]
+            ]);
+        });
     }
 }

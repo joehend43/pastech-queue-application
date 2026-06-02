@@ -413,8 +413,8 @@
             const user = JSON.parse(localStorage.getItem('kasir_userLogin'));
             if (!user) { clearLocalStorageSessi(); window.location.href = '/'; return; }
             fetch('/api/logout-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id }) })
-            .then(() => { clearLocalStorageSessi(); window.location.href = '/'; })
-            .catch(() => { clearLocalStorageSessi(); window.location.href = '/'; });
+            .then(() => { clearLocalStorageSessi(); window.location.href = '/kasir'; })
+            .catch(() => { clearLocalStorageSessi(); window.location.href = '/kasir'; });
         }
     </script>
 </body>
