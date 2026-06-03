@@ -304,6 +304,7 @@
                 console.log('[Reverb Sinyal Masuk]:', data);
                 if(data && data.status != 'called') {
                     console.log('[Reverb Skip]: Status antrian bukan "called".', data);
+                    if(data.status != 'created') return; // Hanya proses jika status bukan "called" maupun "created" (untuk update status Kasir)
                     const urlParams = new URLSearchParams(window.location.search);
                     const leftParam = urlParams.get('left');
                     const rightParam = urlParams.get('right');
