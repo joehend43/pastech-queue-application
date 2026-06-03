@@ -38,7 +38,7 @@
 
         /* --- STYLE STATE 3 (NEW CLIENT DISPLAY DESIGNS) --- */
         .container-s3 { display: flex; height: 100vh; padding: 30px; gap: 30px; width: 100%; }
-        .panel { flex: 1; border-radius: 35px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 12px 30px rgba(0,0,0,.08); position: relative; overflow: hidden; padding: 20px; }
+        .panel { flex: 1; border-radius: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 12px 30px rgba(0,0,0,.08); position: relative; overflow: hidden; padding: 20px; }
         .panel.full-width { flex: none; width: 100%; }
         
         .panel-left-theme { background: #eaf7ef; }   /* Tema Sisi Kiri (Hijau) */
