@@ -46,10 +46,10 @@
 
         .counter { position: absolute; top: 40px; font-size: 4.5vw; font-weight: 900; color: #222; text-transform: uppercase; line-height: 1;}
         .service { font-size: 34px; font-weight: bold; margin-top: 8px; color: #666; }
-        .number { font-size: 19vw; font-weight: 900; color: #111; line-height: 0.85; letter-spacing: -1.2vw; text-align: center; width: 100%; white-space: nowrap; }
+        .number { font-size: 17vw; font-weight: 900; color: #111; line-height: 0.85; letter-spacing: -1.2vw; text-align: center; width: 100%; white-space: nowrap; }
         .status { font-size: 2.2vw; color: #555; background: rgba(255,255,255,.7); padding: 10px 25px; border-radius: 30px; margin-top: 20px; font-weight: bold; }
 
-        .panel.full-width .number { font-size: 35vw; }
+        .panel.full-width .number { font-size: 32vw; }
 
         /* Garis identitas warna atas pada panel */
         .panel::before { content: ''; width: 100%; height: 24px; position: absolute; top: 0; left: 0; }
@@ -563,7 +563,7 @@
                     if (statusLoket === 'Offline') {
                         pane.innerHTML = `
                             <div class="counter">${name}</div>
-                            <div class="number" style="color: #d9534f; font-size: 10vw; letter-spacing: -0.75vw;">OFFLINE</div>
+                            <div class="number" style="color: #d9534f; font-size: 9vw; letter-spacing: -0.75vw;">OFFLINE</div>
                         `;
                         return;
                     }
@@ -571,7 +571,7 @@
                     if (statusLoket === 'Locked') {
                         pane.innerHTML = `
                             <div class="counter">${name}</div>
-                            <div class="number" style="color: #f6c23e; font-size: 8vw; letter-spacing: -0.75vw;">ISTIRAHAT</div>
+                            <div class="number" style="color: #f6c23e; font-size: 7vw; letter-spacing: -0.75vw;">ISTIRAHAT</div>
                             <div class="status" style="background: rgba(246, 194, 62, 0.2); color: #b58100;">Loket Sementara Tutup</div>
                         `;
                         return; // Berhenti di sini, jangan tampilkan nomor antrian dulu
@@ -596,7 +596,7 @@
                             } else {
                                 pane.innerHTML = `
                                     <div class="counter">${name}</div>
-                                    <div class="number" style="font-size: 10vw; letter-spacing: -0.75vw; color: #777;">KOSONG</div>
+                                    <div class="number" style="font-size: 9vw; letter-spacing: -0.75vw; color: #777;">KOSONG</div>
                                     <div class="status" style="background: rgba(0, 0, 0, 0.1); color: #555;">Belum ada antrian</div>
                                 `;
                             }
