@@ -414,7 +414,13 @@
         function unlockKasir() {
             const user = JSON.parse(localStorage.getItem('kasir_userLogin'));
             fetch('/api/toggle-lock-kasir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id, action: 'unlock' }) })
-            .then(res => { if(res.ok) { localStorage.setItem('kasir_isLocked', 'false'); showState2(); } });
+            .then(res => { if(res.ok) { 
+                const now = new Date();
+                const dateTimeStr = now.toISOString().split('T')[0] + ' ' + now.toTimeString().split(' ')[0];
+                localStorage.setItem('kasir_isLogin', 'true');
+                localStorage.setItem('kasir_lastLogin', dateTimeStr);
+                localStorage.setItem('kasir_isLocked', 'false');
+                showState2(); } });
         }
 
         function clearLocalStorageSessi() {
