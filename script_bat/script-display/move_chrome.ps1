@@ -20,39 +20,71 @@ public class Win32 {
         IntPtr hWnd,
         int nCmdShow
     );
+
+    [DllImport("user32.dll")]
+    public static extern bool SetForegroundWindow(
+        IntPtr hWnd
+    );
 }
 '@
 
-$chrome = Get-Process chrome |
-Where-Object {$_.MainWindowHandle -ne 0} |
-Select-Object -Last 1
+# Tunggu Chrome siap
+$chrome = $null
 
-if ($chrome) {
+for ($i = 0; $i -lt 20; $i++) {
 
-    $target =
-    [System.Windows.Forms.Screen]::AllScreens |
+    $chrome = Get-Process chrome -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.MainWindowHandle -ne 0 -and
+            $_.MainWindowTitle -ne ""
+        } |
+        Select-Object -First 1
+
+    if ($chrome) {
+        break
+    }
+
+    Start-Sleep -Milliseconds 500
+}
+
+if (-not $chrome) {
+    exit
+}
+
+# Cari monitor kedua
+$target = [System.Windows.Forms.Screen]::AllScreens |
     Where-Object { -not $_.Primary } |
     Select-Object -First 1
 
-    if ($target) {
+if ($target) {
 
-        $b = $target.Bounds
+    # $b = $target.Bounds
+    $b = $target.WorkingArea
 
-        [Win32]::ShowWindow(
-            $chrome.MainWindowHandle,
-            3
-        )
+    # pastikan window aktif
+    [Win32]::ShowWindow(
+        $chrome.MainWindowHandle,
+        3
+    )
 
-        [Win32]::MoveWindow(
-            $chrome.MainWindowHandle,
-            $b.X,
-            $b.Y,
-            $b.Width,
-            $b.Height,
-            $true
-        )
-    }
+    [Win32]::SetForegroundWindow(
+        $chrome.MainWindowHandle
+    )
+
+    Start-Sleep -Milliseconds 500
+
+    # lempar ke monitor kedua
+    [Win32]::MoveWindow(
+        $chrome.MainWindowHandle,
+        $b.X,
+        $b.Y,
+        $b.Width,
+        $b.Height,
+        $true
+    )
+
+    Start-Sleep -Milliseconds 500
+
+    # fullscreen
+    [System.Windows.Forms.SendKeys]::SendWait('{F11}')
 }
-
-Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.SendKeys]::SendWait('{F11}')

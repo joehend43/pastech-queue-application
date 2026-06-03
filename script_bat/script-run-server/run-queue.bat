@@ -1,4 +1,3 @@
-bat id="dtk1m2"
 @echo off
 
 cd /d C:\laragon\www\pastech-queue-application

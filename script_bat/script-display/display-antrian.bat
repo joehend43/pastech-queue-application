@@ -1,13 +1,26 @@
 @echo off
-title Display Antrian
 
-set "URL=http://localhost:8000/display?left=1&right=2"
-set CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
+set "URL=http://localhost:8000/display?left=1^&right=2"
+set "CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe"
 
-start "" "%CHROME_PATH%" --kiosk "%URL%" --autoplay-policy=no-user-gesture-required
+start "" "%CHROME_PATH%" ^
+--new-window ^
+--disable-gpu ^
+--autoplay-policy=no-user-gesture-required ^
+"%URL%"
 
-timeout /t 5 /nobreak >nul
+timeout /t 3 /nobreak >nul
 
 powershell -ExecutionPolicy Bypass -File move_chrome.ps1
 
-exit
+
+
+@REM start "" "%CHROME_PATH%" ^
+@REM --new-window ^
+@REM --disable-gpu ^
+@REM --disable-gpu-compositing ^
+@REM --disable-features=CalculateNativeWinOcclusion ^
+
+@REM --disable-features=UseSkiaRenderer ^
+@REM --disable-backgrounding-occluded-windows ^
+@REM --disable-renderer-backgrounding ^
