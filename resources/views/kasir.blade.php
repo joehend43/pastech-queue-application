@@ -225,10 +225,10 @@
         // ===================================================================
         function setupKasirReverbListener() {
             // Konfigurasi Reverb disesuaikan murni dengan setelan lokal
-            const pusher = new Pusher("{{ env('REVERB_APP_KEY') }}", {
+            const pusher = new Pusher("{{ config('app.reverb.app_key') }}", {
                 cluster: 'mt1',
-                wsHost: "{{ env('REVERB_HOST', '127.0.0.1') }}",
-                wsPort: {{ env('REVERB_PORT', 8080) }},
+                wsHost: "{{ config('app.reverb.host', '127.0.0.1') }}",
+                wsPort: {{ config('app.reverb.port', 8080) }},
                 forceTLS: false,
                 encrypted: false,
                 enabledTransports: ['ws', 'wss']

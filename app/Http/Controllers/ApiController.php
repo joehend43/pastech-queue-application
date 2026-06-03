@@ -254,11 +254,11 @@ class ApiController extends Controller
             // 3. PROSES CETAK LANGSUNG (HEADLESS PRINTING)
             try {
                 // Tentukan konektor berdasarkan konfigurasi .env
-                if (env('PRINTER_CONNECTION_TYPE') === 'network') {
-                    $connector = new NetworkPrintConnector(env('PRINTER_IP'), env('PRINTER_PORT', 9100));
+                if (config('app.printer.connection_type') === 'network') {
+                    $connector = new NetworkPrintConnector(config('app.printer.ip'), config('app.printer.port'));
                 } else {
                     // Standar Windows USB Sharing
-                    $connector = new WindowsPrintConnector(env('PRINTER_NAME'));
+                    $connector = new WindowsPrintConnector(config('app.printer.name'));
                 }
 
                 $printer = new Printer($connector);

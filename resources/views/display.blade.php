@@ -112,14 +112,14 @@
         let selectedLeftKasirId = null;
         let selectedRightKasirId = null;
         let globalKasirList = [];
-        // const isBroadcastAll = {{ env('BROADCAST_DISPLAY') === 'ALL' ? 'true' : 'false' }};
+        // const isBroadcastAll = {{ config('app.broadcasting.display') === 'ALL' ? 'true' : 'false' }};
 
         // === KONFIGURASI DINAMIS DARI LARAVEL .ENV ===
-        const broadcastMode = "{{ env('BROADCAST_DISPLAY', 'DEFAULT') }}"; // 'ALL', 'GROUP', atau 'DEFAULT'
+        const broadcastMode = "{{ config('app.broadcasting.display', 'DEFAULT') }}"; // 'ALL', 'GROUP', atau 'DEFAULT'
         
         // Mengonversi string "1,2,3" dari env menjadi array [1, 2, 3] di JavaScript
-        const group1 = [{{ env('BROADCAST_GROUP_1', '') }}];
-        const group2 = [{{ env('BROADCAST_GROUP_2', '') }}];
+        const group1 = [{{ config('app.broadcasting.group_1', '') }}];
+        const group2 = [{{ config('app.broadcasting.group_2', '') }}];
 
         // Fungsi untuk mengecek apakah Kasir yang memanggil berada dalam grup yang sama dengan monitor ini
         function isCallerInSameGroup(calledKasirId) {
@@ -276,10 +276,10 @@
         // SYSTEM ENGINE: LARAVEL REVERB WEBSOCKET
         // ==========================================
         function setupReverbListener() {
-            const pusher = new Pusher("{{ env('REVERB_APP_KEY') }}", {
+            const pusher = new Pusher("{{ config('app.reverb.app_key') }}", {
                 cluster: 'mt1',
-                wsHost: "{{ env('REVERB_HOST', '127.0.0.1') }}",
-                wsPort: {{ env('REVERB_PORT', 8080) }},
+                wsHost: "{{ config('app.reverb.host', '127.0.0.1') }}",
+                wsPort: {{ config('app.reverb.port', 8080) }},
                 forceTLS: false,
                 encrypted: false,
                 enabledTransports: ['ws', 'wss']

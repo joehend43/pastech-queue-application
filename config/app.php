@@ -185,4 +185,24 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    'broadcasting' => [
+        'display' => env('BROADCAST_DISPLAY', 'ALL'),
+        'group_1' => env('BROADCAST_GROUP_1', '1,2,3,4'),
+        'group_2' => env('BROADCAST_GROUP_2', '5'),
+    ],
+
+    'reverb' => [
+        'app_key' => env('REVERB_APP_KEY'),
+        'app_secret' => env('REVERB_APP_SECRET'),
+        'host' => env('REVERB_HOST', '192.168.100.16'),
+        'port' => env('REVERB_PORT', 8080),
+    ],
+
+    'printer' => [
+        'connection_type' => env('PRINTER_CONNECTION_TYPE', 'network'), // 'network' atau 'usb'
+        'ip' => env('PRINTER_IP', '192.168.1.100'),
+        'port' => env('PRINTER_PORT', 9100),
+        'name' => env('PRINTER_NAME', 'Antrian Loket Printer'),
+    ]
+
 ];
