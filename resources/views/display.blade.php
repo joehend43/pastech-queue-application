@@ -563,7 +563,7 @@
                     if (statusLoket === 'Offline') {
                         pane.innerHTML = `
                             <div class="counter">${name}</div>
-                            <div class="number" style="color: #d9534f; font-size: 11vw; letter-spacing: -0.5vw;">OFFLINE</div>
+                            <div class="number" style="color: #d9534f; font-size: 10vw; letter-spacing: -0.75vw;">OFFLINE</div>
                         `;
                         return;
                     }
@@ -571,7 +571,7 @@
                     if (statusLoket === 'Locked') {
                         pane.innerHTML = `
                             <div class="counter">${name}</div>
-                            <div class="number" style="color: #f6c23e; font-size: 9vw; letter-spacing: -0.5vw;">ISTIRAHAT</div>
+                            <div class="number" style="color: #f6c23e; font-size: 8vw; letter-spacing: -0.75vw;">ISTIRAHAT</div>
                             <div class="status" style="background: rgba(246, 194, 62, 0.2); color: #b58100;">Loket Sementara Tutup</div>
                         `;
                         return; // Berhenti di sini, jangan tampilkan nomor antrian dulu
@@ -596,7 +596,7 @@
                             } else {
                                 pane.innerHTML = `
                                     <div class="counter">${name}</div>
-                                    <div class="number" style="font-size: 11vw; letter-spacing: -0.5vw; color: #777;">KOSONG</div>
+                                    <div class="number" style="font-size: 10vw; letter-spacing: -0.75vw; color: #777;">KOSONG</div>
                                     <div class="status" style="background: rgba(0, 0, 0, 0.1); color: #555;">Belum ada antrian</div>
                                 `;
                             }
