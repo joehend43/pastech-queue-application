@@ -82,25 +82,24 @@ class ApiController extends Controller
 
     public function getQueues() {
         // Mengambil antrian hari ini yang berjalan
-        $queues = DB::transaction(function (){
+        // return DB::transaction(function (){
             $queues = Queue::whereDate('created_at', now()->toDateString())
                 ->orderBy('created_at', 'desc')
                 ->get();
                 
-            return $queues;
-        });
-        return response()->json($queues);
+            return response()->json($queues);
+        // });
     }
 
     public function getLatestQueues() {
         // Mengambil antrian hari ini yang berjalan
-        return DB::transaction(function (){
+        // return DB::transaction(function (){
             $queues = Queue::whereDate('created_at', now()->toDateString())
                 ->orderBy('called_at', 'desc')
                 ->get();
                 
             return response()->json($queues);
-        });
+        // });
     }
 
     public function callDynamic(Request $request){
@@ -338,7 +337,7 @@ class ApiController extends Controller
             $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
 
             broadcast(new QueueCalled($newQueue, 'API Create', 'created'))->toOthers();
-            
+
             return response()->json([
                 'status' => 'Success',
                 'data' => [
