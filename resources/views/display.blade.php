@@ -59,7 +59,8 @@
         /* Indikator status Reverb di pojok layar */
         #connection-dot { position: fixed; bottom: 15px; right: 15px; width: 14px; height: 14px; background: #d9534f; border-radius: 50%; z-index: 99999; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     </style>
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <!-- <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script> -->
+    <script src="{{ asset('js/pusher.min.js') }}"></script>
 </head>
 <body>
 

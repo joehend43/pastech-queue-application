@@ -6,9 +6,10 @@ const assetsToCache = [
     '/kasir',
     '/display',
     '/manifest.json',
+    '/js/pusher.min.js',
     
     // Library CDN yang kita pakai agar tersimpan di lokal browser setelah diload sekali
-    'https://js.pusher.com/8.2.0/pusher.min.js'
+    // 'https://js.pusher.com/8.2.0/pusher.min.js'
 ];
 
 // 1. EVENT: INSTALL (Mendownload & menyimpan aset ke dalam cache browser)

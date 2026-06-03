@@ -297,6 +297,8 @@ class ApiController extends Controller
                 ], 500);
             }
 
+            broadcast(new QueueCalled($newQueue, 'Kios Cetak', 'created'))->toOthers();
+
             // Kembalikan respons sukses ke device pengirim hit API
             return response()->json([
                 'status' => 'Success',
@@ -335,6 +337,8 @@ class ApiController extends Controller
             // Format nomor (Contoh: A.005)
             $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
 
+            broadcast(new QueueCalled($newQueue, 'API Create', 'created'))->toOthers();
+            
             return response()->json([
                 'status' => 'Success',
                 'data' => [

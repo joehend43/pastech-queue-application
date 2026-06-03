@@ -110,6 +110,8 @@
             .search-box { max-width: 100%; }
         }
     </style>
+    <!-- <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script> -->
+    <script src="{{ asset('js/pusher.min.js') }}"></script>
 </head>
 <body>
 
@@ -214,7 +216,35 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             checkState();
+            // === JALANKAN LISTENER REVERB SAAT HALAMAN DIBUKA ===
+            setupKasirReverbListener();
         });
+
+        // ===================================================================
+        // REALTIME KASIR ENGINE: LISTEN TO ALL EVENTS WITHOUT RELOAD
+        // ===================================================================
+        function setupKasirReverbListener() {
+            // Konfigurasi Reverb disesuaikan murni dengan setelan lokal
+            const pusher = new Pusher("{{ env('REVERB_APP_KEY') }}", {
+                cluster: 'mt1',
+                wsHost: "{{ env('REVERB_HOST', '127.0.0.1') }}",
+                wsPort: {{ env('REVERB_PORT', 8080) }},
+                forceTLS: false,
+                encrypted: false,
+                enabledTransports: ['ws', 'wss']
+            });
+
+            const channel = pusher.subscribe('queue-channel');
+            
+            // Dengarkan sinyal panggilan atau penambahan antrean baru
+            channel.bind('queue.called', function(data) {
+                console.log('[Reverb Kasir Sinyal Masuk]:', data);
+                
+                // Pemicu Mutlak: Jalankan refresh data internal tabel 
+                // Tanpa mengganggu pencarian teks aktif kasir atau merestart halaman
+                loadQueueTable();
+            });
+        }
 
         function checkState() {
             const isLogin = localStorage.getItem('kasir_isLogin');
@@ -318,7 +348,9 @@
                     rawQueuesData = queues;
                     
                     const user = JSON.parse(localStorage.getItem('kasir_userLogin'));
-                    const currentActive = queues.find(q => q.user_id == user.id && q.called_at !== null);
+                    const currentActive = [...queues]
+                        .filter(q => q.user_id == user.id && q.called_at !== null)
+                        .sort((a, b) => new Date(b.called_at) - new Date(a.called_at))[0];
                     
                     const boxNumber = document.getElementById('active-queue-box');
                     const boxTime = document.getElementById('active-queue-time');
