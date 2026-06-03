@@ -37,20 +37,22 @@
         .btn-danger-action { background: #e74a3b; color: #fff; }
 
         /* --- STYLE STATE 3 (NEW CLIENT DISPLAY DESIGNS) --- */
-        .container-s3 { display: flex; height: 100vh; padding: 50px; gap: 35px; width: 100%; }
-        .panel { flex: 1; border-radius: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.08); position: relative; overflow: hidden; }
+        .container-s3 { display: flex; height: 100vh; padding: 30px; gap: 30px; width: 100%; }
+        .panel { flex: 1; border-radius: 35px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 12px 30px rgba(0,0,0,.08); position: relative; overflow: hidden; padding: 20px; }
         .panel.full-width { flex: none; width: 100%; }
         
         .panel-left-theme { background: #eaf7ef; }   /* Tema Sisi Kiri (Hijau) */
         .panel-right-theme { background: #fdeeee; }  /* Tema Sisi Kanan (Merah) */
 
-        .counter { position: absolute; top: 60px; font-size: 72px; font-weight: 900; color: #222; text-transform: uppercase; }
+        .counter { position: absolute; top: 40px; font-size: 4.5vw; font-weight: 900; color: #222; text-transform: uppercase; line-height: 1;}
         .service { font-size: 34px; font-weight: bold; margin-top: 8px; color: #666; }
-        .number { font-size: 170px; font-weight: 900; margin: 40px 0; color: #111; }
-        .status { font-size: 28px; color: #555; background: rgba(255,255,255,.7); padding: 10px 22px; border-radius: 30px; margin-top: 10px; }
+        .number { font-size: 19vw; font-weight: 900; color: #111; line-height: 0.85; letter-spacing: -1.2vw; text-align: center; width: 100%; white-space: nowrap; }
+        .status { font-size: 2.2vw; color: #555; background: rgba(255,255,255,.7); padding: 10px 25px; border-radius: 30px; margin-top: 20px; font-weight: bold; }
+
+        .panel.full-width .number { font-size: 35vw; }
 
         /* Garis identitas warna atas pada panel */
-        .panel::before { content: ''; width: 100%; height: 18px; position: absolute; top: 0; left: 0; }
+        .panel::before { content: ''; width: 100%; height: 24px; position: absolute; top: 0; left: 0; }
         .panel-left-theme::before { background: #2eaf5d; }
         .panel-right-theme::before { background: #d9534f; }
         
@@ -559,7 +561,7 @@
                     if (statusLoket === 'Offline') {
                         pane.innerHTML = `
                             <div class="counter">${name}</div>
-                            <div class="number" style="color: #d9534f; font-size: 110px;">OFFLINE</div>
+                            <div class="number" style="color: #d9534f; font-size: 11vw; letter-spacing: -0.5vw;">OFFLINE</div>
                         `;
                         return;
                     }
@@ -567,7 +569,7 @@
                     if (statusLoket === 'Locked') {
                         pane.innerHTML = `
                             <div class="counter">${name}</div>
-                            <div class="number" style="color: #f6c23e; font-size: 100px; letter-spacing: -2px;">ISTIRAHAT</div>
+                            <div class="number" style="color: #f6c23e; font-size: 9vw; letter-spacing: -0.5vw;">ISTIRAHAT</div>
                             <div class="status" style="background: rgba(246, 194, 62, 0.2); color: #b58100;">Loket Sementara Tutup</div>
                         `;
                         return; // Berhenti di sini, jangan tampilkan nomor antrian dulu
@@ -592,8 +594,8 @@
                             } else {
                                 pane.innerHTML = `
                                     <div class="counter">${name}</div>
-                                    <div class="number" style="font-size: 70px; color: #777;">KOSONG</div>
-                                    <div class="status">Belum ada antrian</div>
+                                    <div class="number" style="font-size: 11vw; letter-spacing: -0.5vw; color: #777;">KOSONG</div>
+                                    <div class="status" style="background: rgba(0, 0, 0, 0.1); color: #555;">Belum ada antrian</div>
                                 `;
                             }
                         });
