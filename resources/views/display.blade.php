@@ -49,7 +49,7 @@
         .number { font-size: 16vw; font-weight: 900; color: #111; line-height: 0.85; letter-spacing: -1.2vw; text-align: center; width: 100%; white-space: nowrap; }
         .status { font-size: 2.2vw; color: #555; background: rgba(255,255,255,.7); padding: 10px 25px; border-radius: 30px; margin-top: 20px; font-weight: bold; }
 
-        .panel.full-width .number { font-size: 32vw; }
+        .panel.full-width .number { font-size: 32vw; letter-spacing: -0.5vw;}
 
         /* Garis identitas warna atas pada panel */
         .panel::before { content: ''; width: 100%; height: 24px; position: absolute; top: 0; left: 0; }
