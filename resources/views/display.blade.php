@@ -46,7 +46,7 @@
 
         .counter { position: absolute; top: 40px; font-size: 4.5vw; font-weight: 900; color: #222; text-transform: uppercase; line-height: 1;}
         .service { font-size: 34px; font-weight: bold; margin-top: 8px; color: #666; }
-        .number { font-size: 17vw; font-weight: 900; color: #111; line-height: 0.85; letter-spacing: -1.2vw; text-align: center; width: 100%; white-space: nowrap; }
+        .number { font-size: 16vw; font-weight: 900; color: #111; line-height: 0.85; letter-spacing: -1.2vw; text-align: center; width: 100%; white-space: nowrap; }
         .status { font-size: 2.2vw; color: #555; background: rgba(255,255,255,.7); padding: 10px 25px; border-radius: 30px; margin-top: 20px; font-weight: bold; }
 
         .panel.full-width .number { font-size: 32vw; }
