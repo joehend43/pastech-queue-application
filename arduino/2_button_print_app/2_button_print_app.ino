@@ -2,34 +2,19 @@
 #include <ESP8266HTTPClient.h>
 
 // ======================================================
-// WIFI
-// ======================================================
-const char* ssid = "Moo";
-const char* password = "omgomgomg";
-
-// ======================================================
-// API
-// ======================================================
-const char* apiOrderUrl =
-  "http://192.168.1.12:8000/api/queues/print-new?type=A";
-
-const char* apiPickupUrl =
-  "http://192.168.1.12:8000/api/queues/print-new?type=B";
-
-// ======================================================
 // PIN
 // ======================================================
-const int redButtonPin = D5;   // print order
-const int greenButtonPin = D2; // print pickup
+const int redButtonPin = D5;    // print order
+const int greenButtonPin = D2;  // print pickup
 
 // ======================================================
 // CONFIG
 // ======================================================
 const unsigned long debounceDelay = 50;
-const unsigned long pressCooldown = 1000; // cooldown per button
+const unsigned long pressCooldown = 1000;  // cooldown per button
 
 // global anti spam
-const unsigned long globalCooldown = 1000; // cooldown between button red and green
+const unsigned long globalCooldown = 1000;  // cooldown between button red and green
 unsigned long globalLastPress = 0;
 
 // ======================================================
@@ -45,116 +30,46 @@ bool lastButton2State = HIGH;
 unsigned long lastDebounce2 = 0;
 unsigned long lastPress2 = 0;
 
-// ======================================================
-// WIFI
-// ======================================================
-void connectWiFi() {
+const String DEVICE_ID = "PRINT_01";
+const String DEVICE_TYPE = "PRINTER";
 
-  if (WiFi.status() == WL_CONNECTED)
-    return;
+unsigned long lastAlive = 0;
 
-  Serial.println("Connecting WiFi...");
-
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  unsigned long startAttempt = millis();
-
-  while (WiFi.status() != WL_CONNECTED &&
-         millis() - startAttempt < 15000) {
-
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println();
-
-  if (WiFi.status() == WL_CONNECTED) {
-
-    Serial.println("WiFi Connected");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
-
-  } else {
-
-    Serial.println("WiFi Failed");
-  }
-}
-
-// ======================================================
-// SEND API
-// ======================================================
-void sendAPI(const char* url) {
-
-  if (WiFi.status() != WL_CONNECTED) {
-
-    Serial.println("WiFi disconnected");
-    return;
-  }
-
-  WiFiClient client;
-  client.setTimeout(2);
-
-  HTTPClient http;
-
-  Serial.print("SEND API: ");
-  Serial.println(url);
-
-  if (!http.begin(client, url)) {
-
-    Serial.println("HTTP begin failed");
-    return;
-  }
-
-  http.setReuse(false);
-  http.setTimeout(1500);
-
-  int httpCode = http.GET();
-
-  Serial.print("HTTP Code: ");
-  Serial.println(httpCode);
-
-  if (httpCode > 0) {
-
-    String payload = http.getString();
-    Serial.println(payload);
-
-  } else {
-
-    Serial.print("HTTP ERROR: ");
-    Serial.println(http.errorToString(httpCode));
-  }
-
-  http.end();
-  yield();
-}
 
 // ======================================================
 // SETUP
 // ======================================================
 void setup() {
-
   Serial.begin(9600);
 
   pinMode(redButtonPin, INPUT_PULLUP);
   pinMode(greenButtonPin, INPUT_PULLUP);
 
   delay(1000);
-
-  connectWiFi();
-
-  Serial.println("System Ready");
 }
 
 // ======================================================
 // LOOP
 // ======================================================
 void loop() {
+  // Heartbeat setiap 10 detik
+  if (millis() - lastAlive >= 5000) {
+    lastAlive = millis();
 
-  // reconnect wifi
-  if (WiFi.status() != WL_CONNECTED)
-    connectWiFi();
+    Serial.println(
+      "ALIVE|" + DEVICE_ID + "|" + DEVICE_TYPE);
+  }
 
+  if (Serial.available()) {
+    String cmd =
+      Serial.readStringUntil('\n');
+
+    cmd.trim();
+
+    if (cmd == "PING") {
+      Serial.println("HELLO|" + DEVICE_ID + "|" + DEVICE_TYPE);
+    }
+  }
   // ==========================
   // BUTTON 1 (RED)
   // ==========================
@@ -182,9 +97,7 @@ void loop() {
           lastPress1 = millis();
           globalLastPress = millis();
 
-          Serial.println("BUTTON 1");
-
-          sendAPI(apiOrderUrl);
+          Serial.println("V1|_|PRINTER|print_order");
         }
       }
     }
@@ -219,9 +132,7 @@ void loop() {
           lastPress2 = millis();
           globalLastPress = millis();
 
-          Serial.println("BUTTON 2");
-
-          sendAPI(apiPickupUrl);
+          Serial.println("V1|_|PRINTER|print_pickup");
         }
       }
     }

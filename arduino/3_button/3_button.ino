@@ -3,30 +3,22 @@
 #include <ArduinoJson.h>
 
 // ======================================================
-// WIFI
-// ======================================================
-const char* ssid = "Moo";
-const char* password = "omgomgomg";
-
-// ======================================================
 // DEVICE
 // ======================================================
 const int idDevice = 5;
+const String deviceType = "KASIR";
 
-// ======================================================
-// API
-// ======================================================
-const char* baseUrl = "http://192.168.1.12:8000";
+unsigned long lastAlive = 0;
 
 // ======================================================
 // PIN
 // ======================================================
-const int btnPrev   = D5;
-const int btnNext   = D6;
+const int btnPrev = D5;
+const int btnNext = D6;
 const int btnPickup = D7;
 
 const int ledGreen = D1;
-const int ledRed   = D2;
+const int ledRed = D2;
 
 // ======================================================
 // CONFIG
@@ -37,7 +29,7 @@ const unsigned long pressCooldown = 700;
 const unsigned long globalCooldown = 300;
 unsigned long globalLastPress = 0;
 
-const unsigned long statusInterval = 1500;
+const unsigned long statusInterval = 3000;
 unsigned long lastStatusCheck = 0;
 
 // ======================================================
@@ -61,145 +53,18 @@ ButtonState buttons[] = {
 };
 
 // ======================================================
-// WIFI
-// ======================================================
-void connectWiFi() {
-
-  if (WiFi.status() == WL_CONNECTED)
-    return;
-
-  Serial.println("Connecting WiFi...");
-
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  unsigned long startAttempt = millis();
-
-  while (WiFi.status() != WL_CONNECTED &&
-         millis() - startAttempt < 15000) {
-
-    delay(300);
-    Serial.print(".");
-  }
-
-  Serial.println();
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("WiFi Connected");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.println("WiFi Failed");
-  }
-}
-
-// ======================================================
-// SEND API
-// ======================================================
-void sendAPI(const char* type) {
-
-  if (WiFi.status() != WL_CONNECTED)
-    return;
-
-  String url;
-  url.reserve(160);
-
-  url = String(baseUrl);
-  url += "/api/queues/call";
-  url += "?type=";
-  url += type;
-  url += "&user_id=";
-  url += idDevice;
-
-  WiFiClient client;
-  client.setTimeout(2);
-
-  HTTPClient http;
-
-  Serial.print("SEND: ");
-  Serial.println(url);
-
-  if (!http.begin(client, url)) {
-    Serial.println("HTTP begin failed");
-    return;
-  }
-
-  http.setReuse(false);
-  http.setTimeout(1500);
-
-  int httpCode = http.GET();
-
-  Serial.print("HTTP: ");
-  Serial.println(httpCode);
-
-  if (httpCode > 0) {
-    String payload = http.getString();
-    Serial.println(payload);
-  } else {
-    Serial.println("API ERROR");
-  }
-
-  http.end();
-  yield();
-}
-
-// ======================================================
 // CHECK STATUS
 // ======================================================
 void checkQueueStatus() {
-
-  if (WiFi.status() != WL_CONNECTED)
-    return;
-
-  String url = String(baseUrl) +
-               "/api/queues/count-remaining";
-
-  WiFiClient client;
-  client.setTimeout(2);
-
-  HTTPClient http;
-
-  if (!http.begin(client, url))
-    return;
-
-  http.setReuse(false);
-  http.setTimeout(1500);
-
-  int httpCode = http.GET();
-
-  if (httpCode > 0) {
-
-    String payload = http.getString();
-
-    StaticJsonDocument<64> doc;
-
-    DeserializationError error =
-      deserializeJson(doc, payload);
-
-    if (!error) {
-
-      int waiting = doc["B"] | 0;
-
-      // Serial.print("Pickup WAITING: ");
-      // Serial.println(waiting);
-
-      digitalWrite(ledRed, waiting != 0);
-      digitalWrite(ledGreen, waiting == 0);
-    }
-
-  } else {
-
-    Serial.println("STATUS API ERROR");
-  }
-
-  http.end();
+  // hit to get status
+  String message = "V1|" + String(idDevice) + "|" + deviceType + "|get_status";
+  Serial.println(message);
 }
 
 // ======================================================
 // SETUP
 // ======================================================
 void setup() {
-
   Serial.begin(9600);
 
   pinMode(btnPrev, INPUT_PULLUP);
@@ -213,24 +78,68 @@ void setup() {
   digitalWrite(ledRed, LOW);
 
   delay(1000);
-
-  connectWiFi();
-
-  Serial.println("SYSTEM READY");
 }
 
 // ======================================================
 // LOOP
 // ======================================================
 void loop() {
+  // Heartbeat setiap 10 detik
+  if (millis() - lastAlive >= 5000) {
+    lastAlive = millis();
 
-  // reconnect wifi
-  if (WiFi.status() != WL_CONNECTED)
-    connectWiFi();
+    Serial.println(
+      "ALIVE|" + String(idDevice) + "|" + deviceType);
+  }
+
+  if (Serial.available()) {
+    String msg =
+      Serial.readStringUntil('\n');
+
+    msg.trim();
+
+    if (msg == "PING") {
+      Serial.println("HELLO|" + String(idDevice) + "|" + deviceType);
+    } else if (msg.startsWith("OK|")) {
+
+      int p1 = msg.indexOf('|');
+      int p2 = msg.indexOf('|', p1 + 1);
+
+      String tipe =
+        msg.substring(p1 + 1, p2);
+
+      String nomor =
+        msg.substring(p2 + 1);
+
+      int waiting =
+        nomor.toInt();
+
+      Serial.println(
+        "LOG|QUEUE=" + String(waiting));
+
+      digitalWrite(
+        ledRed,
+        waiting > 0);
+
+      digitalWrite(
+        ledGreen,
+        waiting == 0);
+    }  
+    // ===================
+    // ERROR
+    // ===================
+    else if (msg.startsWith("ERR|")) {
+
+      Serial.println(
+        "LOG|ERROR=" + msg);
+
+      digitalWrite(ledRed, HIGH);
+      digitalWrite(ledGreen, HIGH);
+    }
+  }
 
   // button handler
   for (auto& btn : buttons) {
-
     int reading = digitalRead(btn.pin);
 
     if (reading != btn.lastState)
@@ -251,14 +160,13 @@ void loop() {
             millis() - globalLastPress > globalCooldown;
 
           if (buttonReady && globalReady) {
-
             btn.lastPress = millis();
             globalLastPress = millis();
 
-            Serial.print("BUTTON: ");
-            Serial.println(btn.type);
+            String message =
+              "V1|" + String(idDevice) + "|" + deviceType + "|" + btn.type;
 
-            sendAPI(btn.type);
+            Serial.println(message);
           }
         }
       }
@@ -269,7 +177,6 @@ void loop() {
 
   // status polling
   if (millis() - lastStatusCheck >= statusInterval) {
-
     lastStatusCheck = millis();
 
     checkQueueStatus();
