@@ -34,3 +34,7 @@ Route::get('/queues/print-new', [ApiController::class, 'generateQueue']);
 Route::post('/toggle-lock-kasir', [ApiController::class, 'toggleLockKasir']);
 
 Route::get('/queues/create-new', [ApiController::class, 'createQueue']);
+
+// heartbeat
+Route::get('/update_last_seen', [ApiController::class, 'updateLastSeenDevice']);
+Route::get('/device-status', [ApiController::class, 'getUserLastSeen']);

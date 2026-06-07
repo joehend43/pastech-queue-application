@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('type', ['kasir', 'display']);
+            $table->enum('type', ['kasir', 'display', 'printer']);
             $table->enum('status', ['Offline', 'Online', 'Locked'])->default('Offline');
             $table->dateTime('last_login')->nullable();
             $table->boolean('is_active')->default(true);

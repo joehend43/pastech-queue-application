@@ -22,6 +22,13 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+         // 1 Printer
+        User::create([
+            'name' => 'Printer 1' ,
+            'type' => 'printer',
+        ]);
+    
+
         // 3 Display
         for ($i = 1; $i <= 3; $i++) {
             User::create([

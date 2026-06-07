@@ -1,36 +1,25 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-#include <ArduinoJson.h>
-
 // ======================================================
 // DEVICE
 // ======================================================
-const int idDevice = 5;
+const int idDevice = 1;
 const String deviceType = "KASIR";
-
 unsigned long lastAlive = 0;
 
 // ======================================================
 // PIN
 // ======================================================
-const int btnPrev = D5;
-const int btnNext = D6;
-const int btnPickup = D7;
-
-const int ledGreen = D1;
-const int ledRed = D2;
+const int redButtonPin = D5;    // call current
+const int greenButtonPin = D2;  // call next_order
 
 // ======================================================
 // CONFIG
 // ======================================================
 const unsigned long debounceDelay = 50;
-const unsigned long pressCooldown = 700;
 
-const unsigned long globalCooldown = 300;
+const unsigned long pressCooldown = 1000;  // tombol sama
+const unsigned long globalCooldown = 300;  // antar tombol
+
 unsigned long globalLastPress = 0;
-
-const unsigned long statusInterval = 5000;
-unsigned long lastStatusCheck = 0;
 
 // ======================================================
 // BUTTON STRUCT
@@ -48,18 +37,8 @@ struct ButtonState {
 
 ButtonState buttons[] = {
   { D5, "current" },
-  { D6, "next_order" },
-  { D7, "next_pickup" }
+  { D2, "next_order" }
 };
-
-// ======================================================
-// CHECK STATUS
-// ======================================================
-void checkQueueStatus() {
-  // hit to get status
-  String message = "V1|" + String(idDevice) + "|" + deviceType + "|get_status";
-  Serial.println(message);
-}
 
 // ======================================================
 // SETUP
@@ -67,22 +46,13 @@ void checkQueueStatus() {
 void setup() {
   Serial.begin(9600);
 
-  pinMode(btnPrev, INPUT_PULLUP);
-  pinMode(btnNext, INPUT_PULLUP);
-  pinMode(btnPickup, INPUT_PULLUP);
-
-  pinMode(ledGreen, OUTPUT);
-  pinMode(ledRed, OUTPUT);
-
-  digitalWrite(ledGreen, LOW);
-  digitalWrite(ledRed, LOW);
+  pinMode(redButtonPin, INPUT_PULLUP);
+  pinMode(greenButtonPin, INPUT_PULLUP);
 
   delay(1000);
-
-  Serial.println("LOG|Device= " + deviceType + " - " + String(idDevice) + " Is Ready");
 }
 
-void handleSerialCom(
+void handleSerialCom() {
   // Heartbeat setiap 5 detik
   if (millis() - lastAlive >= 5000) {
     lastAlive = millis();
@@ -99,53 +69,25 @@ void handleSerialCom(
 
     if (msg == "PING") {
       Serial.println("HELLO|" + String(idDevice) + "|" + deviceType);
-    } else if (msg.startsWith("OK|")) {
-
-      int p1 = msg.indexOf('|');
-      int p2 = msg.indexOf('|', p1 + 1);
-
-      String tipe =
-        msg.substring(p1 + 1, p2);
-
-      String nomor =
-        msg.substring(p2 + 1);
-
-      int waiting =
-        nomor.toInt();
-
-      Serial.println(
-        "LOG|QUEUE=" + String(waiting));
-
-      digitalWrite(
-        ledRed,
-        waiting > 0);
-
-      digitalWrite(
-        ledGreen,
-        waiting == 0);
     }
     // ===================
     // ERROR
     // ===================
-    else if (msg.startsWith("ERR|")) {
-
+    else if (msg.startsWith("ERR|"))
       Serial.println(
         "LOG|ERROR=" + msg);
+  }
+}
 
-      digitalWrite(ledRed, HIGH);
-      digitalWrite(ledGreen, HIGH);
-    }
-  })
-
-  // ======================================================
-  // LOOP
-  // ======================================================
-  void loop() {
-
+// ======================================================
+// LOOP
+// ======================================================
+void loop() {
   handleSerialCom();
 
   // button handler
   for (auto& btn : buttons) {
+
     int reading = digitalRead(btn.pin);
 
     if (reading != btn.lastState)
@@ -179,13 +121,6 @@ void handleSerialCom(
     }
 
     btn.lastState = reading;
-  }
-
-  // status polling
-  if (millis() - lastStatusCheck >= statusInterval) {
-    lastStatusCheck = millis();
-
-    checkQueueStatus();
   }
 
   yield();

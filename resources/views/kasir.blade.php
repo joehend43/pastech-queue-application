@@ -128,6 +128,15 @@
         <div class="dashboard-header">
             <h1 id="txt-welcome-kasir" class="page-title">Dashboard Kasir</h1>
             <div class="header-utils">
+                  <div id="printer-status"
+                    style="padding:12px 16px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;font-weight:600;">
+                    ⏳ Printer
+                </div>
+
+                <div id="mesin-status"
+                    style="padding:12px 16px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;font-weight:600;">
+                    ⏳ Mesin Panggil
+                </div>
                 <button class="header-btn btn-util-lock" onclick="lockKasir()">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
                     Kunci Layar
@@ -339,6 +348,53 @@
             }
             
             loadQueueTable();
+            loadDeviceStatus(Number(user.id));
+        }
+
+        // handle status device
+        function loadDeviceStatus(user_id) {
+            fetch('/api/device-status?user_id='+user_id)
+                .then(res => res.json())
+                .then(data => {
+                    const printer = document.getElementById('printer-status');
+                    const mesin = document.getElementById('mesin-status');
+                    const user = JSON.parse(localStorage.getItem('kasir_userLogin'));
+                    const userId = Number(user.id);
+                    // selain user 5 printer status akan di hide
+                    // karena mesin printer skrng hanya connect ke user 5
+                    if (userId != 5){
+                        printer.classList.add('hidden');
+                    }
+
+                    if (data.printer) {
+                        printer.innerHTML = '🟢 Printer';
+                        printer.style.background = '#ecfdf3';
+                        printer.style.borderColor = '#bbf7d0';
+                        printer.style.color = '#15803d';
+                    } else {
+                        printer.innerHTML = '🔴 Printer';
+                        printer.style.background = '#fef2f2';
+                        printer.style.borderColor = '#fecaca';
+                        printer.style.color = '#dc2626';
+                    }
+
+                    if (data.mesin_panggil) {
+                        mesin.innerHTML = '🟢 Mesin Panggil';
+                        mesin.style.background = '#ecfdf3';
+                        mesin.style.borderColor = '#bbf7d0';
+                        mesin.style.color = '#15803d';
+                    } else {
+                        mesin.innerHTML = '🔴 Mesin Panggil';
+                        mesin.style.background = '#fef2f2';
+                        mesin.style.borderColor = '#fecaca';
+                        mesin.style.color = '#dc2626';
+                    }
+
+                })
+                .catch(() => {
+                    document.getElementById('printer-status').innerHTML = '🔴 Printer';
+                    document.getElementById('mesin-status').innerHTML = '🔴 Mesin Panggil';
+                });
         }
 
         function loadQueueTable() {

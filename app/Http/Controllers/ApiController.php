@@ -347,4 +347,68 @@ class ApiController extends Controller
             ]);
         });
     }
+
+    public function updateLastSeenDevice(Request $request)
+    {
+        $userId = $request->get('user_id');
+
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user_id wajib diisi'
+            ], 400);
+        }
+
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan'
+            ], 404);
+        }
+
+        $user->device_last_seen_at = now();
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'server_time' => now()->toDateTimeString()
+        ]);
+    }
+
+    
+    public function getUserLastSeen(Request $request)
+    {
+        $userId = (int) $request->user_id;
+
+        $mesinPanggil = false;
+        $printer = false;
+
+        // Ambil status mesin panggil dari user yang login
+        $user = User::find($userId);
+
+        if ($user && $user->device_last_seen_at) {
+            $mesinPanggil = strtotime($user->device_last_seen_at) >= strtotime('-15 seconds');
+        }
+
+        // Khusus user 5, cek juga printer di user 6
+        // hardcode karna printer akan hanya colok di user 5
+        if ($userId === 5) {
+            $printerUser = User::find(6);
+            if ($printerUser && $printerUser->device_last_seen_at) {
+                $printer =
+                    strtotime($printerUser->device_last_seen_at) >= strtotime('-15 seconds');
+            }
+
+            return response()->json([
+                'mesin_panggil' => $mesinPanggil,
+                'printer' => $printer
+            ]);
+        }
+
+        return response()->json([
+            'mesin_panggil' => $mesinPanggil
+        ]);
+    }
 }

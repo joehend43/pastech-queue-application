@@ -1,6 +1,3 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-
 // ======================================================
 // PIN
 // ======================================================
@@ -30,7 +27,7 @@ bool lastButton2State = HIGH;
 unsigned long lastDebounce2 = 0;
 unsigned long lastPress2 = 0;
 
-const String DEVICE_ID = "PRINT_01";
+const String DEVICE_ID = "6";
 const String DEVICE_TYPE = "PRINTER";
 
 unsigned long lastAlive = 0;
@@ -48,11 +45,8 @@ void setup() {
   delay(1000);
 }
 
-// ======================================================
-// LOOP
-// ======================================================
-void loop() {
-  // Heartbeat setiap 10 detik
+void handleSerialCom(){
+  // Heartbeat setiap 5 detik
   if (millis() - lastAlive >= 5000) {
     lastAlive = millis();
 
@@ -70,6 +64,14 @@ void loop() {
       Serial.println("HELLO|" + DEVICE_ID + "|" + DEVICE_TYPE);
     }
   }
+}
+
+// ======================================================
+// LOOP
+// ======================================================
+void loop() {
+  handleSerialCom();
+
   // ==========================
   // BUTTON 1 (RED)
   // ==========================
