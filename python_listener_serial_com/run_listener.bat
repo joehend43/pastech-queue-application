@@ -1,7 +1,7 @@
 @echo off
 
 :loop
-cd C:\Queue_Listener\dist\queue_listener
+cd C:\queue_listener
 
 queue_listener.exe
 

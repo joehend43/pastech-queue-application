@@ -3,18 +3,38 @@ import serial.tools.list_ports
 import threading
 import requests
 import time
-import sys
-import os
 import winreg
+from logging.handlers import TimedRotatingFileHandler
+import logging
+import os
+import sys
 
-API_BASE_URL = "http://127.0.0.1:8000/api"
+#const config
+API_BASE_URL = "http://192.168.100.16:8000/api"
+SERIAL_BAUDRATE = 9600
+API_TIMEOUT = 3
+WATCHDOG_TIMEOUT = 20
+SCAN_INTERVAL = 3
 
 session = requests.Session()
 devices_lock = threading.Lock()
 devices = {}
-WATCHDOG_TIMEOUT = 20
-SCAN_INTERVAL = 3
 
+
+def api_get(url):
+    logging.info(url)
+
+    response = session.get(url, timeout=API_TIMEOUT)
+
+    logging.info(f"Status: {response.status_code}")
+
+    if response.status_code != 200:
+        try:
+            logging.error(f"Resp: {response.json()}")
+        except:
+            logging.error("Resp: Invalid JSON")
+
+    return response
 
 
 def process_command(line, ser):
@@ -23,27 +43,32 @@ def process_command(line, ser):
         if line.startswith("ALIVE|"):
             parts = line.split("|")
             device_id = parts[1]
-            if device_id in devices:
-                url = f"{API_BASE_URL}/update_last_seen"
-                response= session.get(
-                    url,
-                    params={"user_id": device_id},
-                    timeout=2
-                )
 
-                print(
-                    f"Status: {response.status_code}")
-                if response.status_code != 200 :
-                    print( f"Resp: {response.json()}")   
+            if device_id in devices:
+                # device dianggap hidup begitu ALIVE diterima
                 devices[device_id]["last_seen"] = time.time()
-                print("[ESP]","[Device:",device_id, "][ALIVE]")
+
+                try:
+                    api_get(
+                        f"{API_BASE_URL}/update_last_seen?user_id={device_id}"
+                    )
+                except Exception as ex:
+                    logging.error(
+                        "Heartbeat API failed for %s: %s",
+                        device_id,
+                        ex
+                    )
+
+                logging.info(
+                    "[ESP] [Device:%s] [ALIVE]",device_id)
+
             return
         
         if line.startswith("LOG|"):
-            print("[ESP]", line)
+            logging.info("[ESP] %s", line)
             return
 
-        print("RX:", line)
+        logging.info("RX: %s", line)
 
         parts = line.strip().split("|")
 
@@ -58,96 +83,48 @@ def process_command(line, ser):
         #print order 
         if device_type == "PRINTER" and command == "print_order":
             url = f"{API_BASE_URL}/queues/print-new?type=A"
-            print(url)
-            response = session.get(url, timeout=2)
-            
-            print(
-                f"Status: {response.status_code}"
-            )
-            if response.status_code != 200 :
-                print(
-                 f"Resp: {response.json()}"
-                )   
+            api_get(url) 
         #print pickup
         elif device_type == "PRINTER" and command == "print_pickup":
             url = f"{API_BASE_URL}/queues/print-new?type=B"
-            print(url)
-            response = session.get(url, timeout=2)
-
-            print(
-                f"Status: {response.status_code}"
-            )
-            if response.status_code != 200 :
-                print(
-                 f"Resp: {response.json()}"
-                )   
+            api_get(url)  
         #Call Next Order
         elif device_type == "KASIR" and command == "next_order":
             url = f"{API_BASE_URL}/queues/call?type={command}&user_id={device_id}"
-            print(url)
-            response = session.get(url, timeout=2)
-            print(
-                f"Status: {response.status_code}"
-            )
-            if response.status_code != 200 :
-                print(
-                 f"Resp: {response.json()}"
-                )   
+            api_get(url)  
         #Call Next Order
         elif device_type == "KASIR" and command == "current":
             url = f"{API_BASE_URL}/queues/call?type={command}&user_id={device_id}"
-            print(url)
-            response = session.get(url, timeout=2)
-            print(
-                f"Status: {response.status_code}"
-            )
-            if response.status_code != 200 :
-                print(
-                 f"Resp: {response.json()}"
-                )   
+            api_get(url)    
         #Call Next Order
         elif device_type == "KASIR" and command == "next_pickup":
             url = f"{API_BASE_URL}/queues/call?type={command}&user_id={device_id}"
-            print(url)
-            response = session.get(url, timeout=2)
-            print(
-                f"Status: {response.status_code}"
-            )
-            if response.status_code != 200 :
-                print(
-                 f"Resp: {response.json()}"
-                )   
+            api_get(url)   
         #get count queue
         elif device_type == "KASIR" and command == "get_status":
             url = f"{API_BASE_URL}/queues/count-remaining"
-            response = session.get(url, timeout=2)
-            if response.status_code != 200 :
-                print(
-                 f"Resp: {response.json()}"
-                ) 
-
-            if response.status_code == 200 :
+            response = api_get(url)   
+            if response.status_code == 200:
                 data = response.json()
-                queue_total = data.get("B") or 0
-
+                queue_total = data.get("B", 0)
                 ser.write(
                     f"OK|B|{queue_total}\n".encode()
                 )
         else:
-            print(f"Unknown command: {command}")
+            logging.warning(f"Unknown command: {command}")
 
     except requests.exceptions.Timeout:
-        print("API Timeout")
+        logging.error("API Timeout")
         ser.write(
             b"ERR|TIMEOUT\n"
         )
     except requests.exceptions.ConnectionError:
-        print("API Offline")
+        logging.error("API Offline")
         ser.write(
             b"ERR|OFFLINE\n"
         )
     except requests.exceptions.HTTPError as ex:
-        print(
+        logging.error(
             f"HTTP Error: "
             f"{response.status_code}"
             f"{response.json()}"
@@ -161,7 +138,7 @@ def process_command(line, ser):
         )
 
     except Exception as ex:
-        print(ex)
+        logging.error(ex)
         ser.write(
             b"ERR|UNKNOWN\n"
         )
@@ -170,7 +147,7 @@ def serial_listener(device_id):
     with devices_lock:
         ser = devices[device_id]["serial"]
 
-    print(f"Listening {device_id}")
+    logging.info(f"Listening {device_id}")
 
     try:
 
@@ -191,10 +168,8 @@ def serial_listener(device_id):
             )
 
     except Exception as ex:
-
-        print(
-            f"{device_id} disconnected:",
-            ex
+        logging.warning(
+            f"{device_id} disconnected: {ex}"
         )
 
     finally:
@@ -208,7 +183,7 @@ def serial_listener(device_id):
             with devices_lock:
                 devices.pop(device_id, None)
 
-        print(
+        logging.info(
             f"{device_id} removed"
         )
 
@@ -239,13 +214,13 @@ def scan_devices():
             if already_connected:
                 continue
 
-            print(
+            logging.info(
                 f"Checking {port.device}"
             )
 
             ser = serial.Serial(
                 port.device,
-                9600,
+                SERIAL_BAUDRATE,
                 timeout=0.5,
                 write_timeout=0.5
             )
@@ -264,7 +239,7 @@ def scan_devices():
                 .strip()
             )
 
-            print(
+            logging.info(
                 f"{port.device} -> {response}"
             )
 
@@ -291,7 +266,7 @@ def scan_devices():
                     "last_seen": time.time()
             }
 
-            print(
+            logging.info(
                 f"CONNECTED "
                 f"{device_id} "
                 f"({device_type}) "
@@ -305,21 +280,26 @@ def scan_devices():
             ).start()
 
         except Exception as ex:
-            print(f"OPEN FAIL {port.device}: {ex}")
+            logging.error(f"OPEN FAIL {port.device}: {ex}")
             continue
 
 def watchdog():
     while True:
         now = time.time()
-        for device_id in list(devices.keys()):
+        with devices_lock:
+            device_ids = list(devices.keys())
+        for device_id in device_ids:
             try:
-                diff = (
-                    now -
-                    devices[device_id]["last_seen"]
-                )
+                with devices_lock:
+                    device = devices.get(device_id)
+
+                if not device:
+                    continue
+
+                diff = now - device["last_seen"]
 
                 if diff > WATCHDOG_TIMEOUT:
-                    print(
+                    logging.info(
                         f"{device_id} timeout"
                     )
 
@@ -327,18 +307,15 @@ def watchdog():
                         devices[device_id]["serial"].close()
                     except:
                         pass
-
-                    devices.pop(
-                        device_id,
-                        None
-                    )
+                    with devices_lock:
+                        devices.pop( device_id, None )
             except:
                 pass
 
         time.sleep(5)
 
 def register_startup():
-    print("Checking Auto Startup")
+    logging.info("Checking Auto Startup")
     app_name = "Listener"
     app_path = r"C:\Queue_Listener\run_listener.bat"
 
@@ -353,7 +330,7 @@ def register_startup():
         winreg.QueryValueEx(key, app_name)
         winreg.CloseKey(key)
 
-        print("Startup already registered")
+        logging.info("Startup already registered")
         return
 
     except FileNotFoundError:
@@ -374,11 +351,55 @@ def register_startup():
         app_path
     )
     winreg.CloseKey(key)
-    print("Startup registered")
+    logging.info("Startup registered")
 
+def get_base_path():
+    # kalau running dari exe (PyInstaller)
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    # kalau run .py biasa
+    return os.path.dirname(os.path.abspath(__file__))
+
+def register_logger():
+    base_path = get_base_path()
+    log_dir = os.path.join(base_path, "logs")
+
+    os.makedirs(log_dir, exist_ok=True)
+
+    log_file = os.path.join(log_dir, "app.log")
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    handler = TimedRotatingFileHandler(
+        log_file,
+        when="midnight",
+        interval=1,
+        backupCount=30,
+        encoding="utf-8"
+    )
+
+    handler.suffix = "%Y-%m-%d"
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s"
+    )
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logging.info("Enabled Logger")
+
+
+
+#main
+register_logger()
 register_startup()
 
-print("Queue Gateway Started")
+logging.info("Queue Gateway Started")
 
 threading.Thread(
     target=watchdog,
@@ -389,8 +410,8 @@ while True:
     try:
         scan_devices()
     except Exception as ex:
-        print(
-            "MAIN LOOP ERROR:",
+        logging.info(
+            "MAIN LOOP ERROR: %s",
             ex
         )
     time.sleep(SCAN_INTERVAL)

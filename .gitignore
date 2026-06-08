@@ -17,3 +17,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/python_listener_serial_com/build
+/python_listener_serial_com/dist
+/python_listener_serial_com/logs
