@@ -30,16 +30,16 @@ Route::get('/queues/call', [ApiController::class, 'callDynamic']);
 Route::get('/queues/call/{id}', [ApiController::class, 'callQueue']);
 Route::get('/queues/recall-current', [ApiController::class, 'recallCurrent']);
 Route::get('/queues/count-remaining', [ApiController::class, 'countRemainingByType']);
-Route::get('/queues/print-new', [ApiController::class, 'generateQueue']);
-Route::post('/toggle-lock-kasir', [ApiController::class, 'toggleLockKasir']);
-
 Route::middleware('throttle:device')
-    ->get('/queues/create-new', [ApiController::class, 'createQueue']);
+    ->get('/queues/print-new', [ApiController::class, 'generateQueue']);
+    
+Route::post('/toggle-lock-kasir', [ApiController::class, 'toggleLockKasir']);
+Route::get('/queues/create-new', [ApiController::class, 'createQueue']);
 
 // heartbeat
 Route::middleware('throttle:device')
     ->get('/update_last_seen', [ApiController::class, 'updateLastSeenDevice']);
-    
+
 Route::get('/device-status', [ApiController::class, 'getUserLastSeen']);
 
 Route::get('/health', function () {
