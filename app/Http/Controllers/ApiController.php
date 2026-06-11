@@ -7,6 +7,7 @@ use DB;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Queue;
+use Illuminate\Support\Facades\Log;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
@@ -223,13 +224,16 @@ class ApiController extends Controller
 
     public function generateQueue(Request $request)
     {
+        // [1] Titik Awal Fungsi
+        $start_time = microtime(true);
+
         $type = $request->input('type'); // Menerima 'A' atau 'B'
         
         if (!in_array($type, ['A', 'B'])) {
             return response()->json(['message' => 'Tipe antrian tidak valid'], 400);
         }
 
-        return DB::transaction(function () use ($type) {
+        $newQueue = DB::transaction(function () use ($type) {
             // 1. Ambil nomor antrian selanjutnya (Increment)
             $lastQueue = Queue::whereDate('created_at', now()->toDateString())
                 ->where('type', $type)
@@ -239,74 +243,97 @@ class ApiController extends Controller
             $nextNumber = $lastQueue ? ($lastQueue->queue_number + 1) : 1;
 
             // 2. Simpan data antrian ke DB
-            $newQueue = Queue::create([
+            return Queue::create([
                 'type' => $type,
                 'queue_number' => $nextNumber,
                 'called_at' => null,
                 'user_id' => null,
                 'created_at' => now(),
             ]);
+        });
 
-            // Format nomor (Contoh: A.005)
-            $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
-            $waktuCetak = now()->format('d/m/Y H:i:s');
+        // [2] Selesai DB Transaksi
+        $db_time = microtime(true);
+        $db_duration = round(($db_time - $start_time) * 1000, 2);
 
-            // 3. PROSES CETAK LANGSUNG (HEADLESS PRINTING)
-            try {
-                // Tentukan konektor berdasarkan konfigurasi .env
-                if (config('app.printer.connection_type') === 'network') {
-                    $connector = new NetworkPrintConnector(config('app.printer.ip'), config('app.printer.port'));
-                } else {
-                    // Standar Windows USB Sharing
-                    $connector = new WindowsPrintConnector(config('app.printer.name'));
-                }
+        // Format nomor (Contoh: A.005)
+        $formattedNumber = $newQueue->type . '.' . str_pad($newQueue->queue_number, 3, '0', STR_PAD_LEFT);
+        $waktuCetak = now()->format('d/m/Y H:i:s');
 
-                $printer = new Printer($connector);
-
-                // --- Mulai Desain Struk Thermal ---
-                $printer->setJustification(Printer::JUSTIFY_CENTER);
-
-                // Cetak Tipe Antrian
-                $printer->text(($type === 'A' ? "PEMBELIAN " : "PENGAMBILAN BARANG "));
-                $printer->text($waktuCetak ."\n");
-                $printer->feed();
-                // Cetak Nomor Besar
-                $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
-                $printer->text($formattedNumber . "\n");
-                $printer->selectPrintMode(); // Reset
-                
-                $printer->feed();
-                $printer->text("MOHON TIKET DISERTAKAN SAAT NOMER \n DIPANGGIL (PASTECH01).\n");
-                
-                // $printer->feed(2); // Kasih jarak potongan kertas
-                
-                // Perintah potong kertas (Auto-cutter) jika printer mendukung
-                $printer->cut();
-                
-                // Tutup koneksi printer
-                $printer->close();
-
-            } catch (\Exception $e) {
-                // Log error jika printer mati / tidak terhubung agar API tidak crash sepenuhnya
-                \Log::error("Gagal mencetak struk antrian: " . $e->getMessage());
-                return response()->json([
-                    'status' => 'Warning',
-                    'message' => 'Antrian tersimpan di DB, tapi gagal cetak fisik.',
-                    'error' => $e->getMessage()
-                ], 500);
+        // 3. PROSES CETAK LANGSUNG (HEADLESS PRINTING)
+        try {
+            // Tentukan konektor berdasarkan konfigurasi .env
+            if (config('app.printer.connection_type') === 'network') {
+                $connector = new NetworkPrintConnector(config('app.printer.ip'), config('app.printer.port'));
+            } else {
+                // Standar Windows USB Sharing
+                $connector = new WindowsPrintConnector(config('app.printer.name'));
             }
 
-            broadcast(new QueueCalled($newQueue, 'Kios Cetak', 'created'))->toOthers();
+            $printer = new Printer($connector);
 
-            // Kembalikan respons sukses ke device pengirim hit API
+            // --- Mulai Desain Struk Thermal ---
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
+
+            // Cetak Tipe Antrian
+            $printer->text(($type === 'A' ? "PEMBELIAN " : "PENGAMBILAN BARANG "));
+            $printer->text($waktuCetak ."\n");
+            $printer->feed();
+            // Cetak Nomor Besar
+            $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
+            $printer->text($formattedNumber . "\n");
+            $printer->selectPrintMode(); // Reset
+            
+            $printer->feed();
+            $printer->text("MOHON TIKET DISERTAKAN SAAT NOMER \n DIPANGGIL (PASTECH01).\n");
+            
+            // $printer->feed(2); // Kasih jarak potongan kertas
+            
+            // Perintah potong kertas (Auto-cutter) jika printer mendukung
+            $printer->cut();
+            
+            // Tutup koneksi printer
+            $printer->close();
+
+        } catch (\Exception $e) {
+            // Log error jika printer mati / tidak terhubung agar API tidak crash sepenuhnya
+            \Log::error("Gagal mencetak struk antrian: " . $e->getMessage());
             return response()->json([
-                'status' => 'Success',
-                'data' => [
-                    'id' => $newQueue->id,
-                    'formatted' => $formattedNumber
-                ]
-            ]);
-        });
+                'status' => 'Warning',
+                'message' => 'Antrian tersimpan di DB, tapi gagal cetak fisik.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+        // [3] Selesai Print Physical
+        $print_time = microtime(true);
+        $print_duration = round(($print_time - $db_time) * 1000, 2);
+
+        broadcast(new QueueCalled($newQueue, 'Kios Cetak', 'created'))->toOthers();
+
+        // [4] Selesai Broadcast & Total Durasi Keseluruhan
+        $end_time = microtime(true);
+        $broadcast_duration = round(($end_time - $print_time) * 1000, 2);
+        $total_duration = round(($end_time - $start_time) * 1000, 2);
+
+        // SIMPAN LOG FORMAT RINGKAS (Single Line untuk mempermudah tracking)
+        Log::info(sprintf(
+            "QUEUE_PERF [%s] -> DB: %sms | PRINT: %sms | BROADCAST: %sms | TOTAL: %sms",
+            $formattedNumber,
+            $db_duration,
+            $print_duration,
+            $broadcast_duration,
+            $total_duration
+        ));
+
+        // Kembalikan respons sukses ke device pengirim hit API
+        return response()->json([
+            'status' => 'Success',
+            'data' => [
+                'id' => $newQueue->id,
+                'formatted' => $formattedNumber
+            ]
+        ]);
     }
 
     public function createQueue(Request $request)
