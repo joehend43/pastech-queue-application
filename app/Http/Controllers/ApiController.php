@@ -49,22 +49,12 @@ class ApiController extends Controller
         $dummy = Queue::withTrashed()->find(1);
         if (!$dummy) {
             // Jika tidak ada antrian dengan ID 1, buat dummy baru dengan ID 1
-            $dummy = Queue::forceCreate([
+            $dummy = Queue::create([
                 'id' => 1,
                 'type' => 'O',
                 'queue_number' => 0,
                 'deleted_at' => now(),
             ]);
-
-            if($dummy->id !== 1) {
-                $dummy->forceDelete();
-                $dummy = new Queue();
-                $dummy->id = 1;
-                $dummy->type = 'O';
-                $dummy->queue_number = 0;
-                $dummy->deleted_at = now();
-                $dummy->save();
-            }
         }
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
@@ -81,22 +71,12 @@ class ApiController extends Controller
         $dummy = Queue::withTrashed()->find(1);
         if (!$dummy) {
             // Jika tidak ada antrian dengan ID 1, buat dummy baru dengan ID 1
-            $dummy = Queue::forceCreate([
+            $dummy = Queue::create([
                 'id' => 1,
                 'type' => 'O',
                 'queue_number' => 0,
                 'deleted_at' => now(),
             ]);
-
-            if($dummy->id !== 1) {
-                $dummy->forceDelete();
-                $dummy = new Queue();
-                $dummy->id = 1;
-                $dummy->type = 'O';
-                $dummy->queue_number = 0;
-                $dummy->deleted_at = now();
-                $dummy->save();
-            }
         }
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
@@ -116,22 +96,12 @@ class ApiController extends Controller
         $dummy = Queue::withTrashed()->find(1);
         if (!$dummy) {
             // Jika tidak ada antrian dengan ID 1, buat dummy baru dengan ID 1
-            $dummy = Queue::forceCreate([
+            $dummy = Queue::create([
                 'id' => 1,
                 'type' => 'O',
                 'queue_number' => 0,
                 'deleted_at' => now(),
             ]);
-
-            if($dummy->id !== 1) {
-                $dummy->forceDelete();
-                $dummy = new Queue();
-                $dummy->id = 1;
-                $dummy->type = 'O';
-                $dummy->queue_number = 0;
-                $dummy->deleted_at = now();
-                $dummy->save();
-            }
         }
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
