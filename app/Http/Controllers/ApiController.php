@@ -46,11 +46,7 @@ class ApiController extends Controller
             'last_login' => now()
         ]);
 
-        // $dummy = Queue::withTrashed()->first();
-        $dummy = new Queue();
-        $dummy->id = 0;
-        $dummy->type = 'O';
-        $dummy->queue_number = 0;
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
@@ -63,11 +59,7 @@ class ApiController extends Controller
             'status' => 'Offline'
         ]);
 
-        // $dummy = Queue::withTrashed()->first();
-        $dummy = new Queue();
-        $dummy->id = 0;
-        $dummy->type = 'O';
-        $dummy->queue_number = 0;
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
@@ -83,11 +75,7 @@ class ApiController extends Controller
         } else {
             $user->update(['status' => 'Online', 'last_login' => now()]);
         }
-        // $dummy = Queue::withTrashed()->first();
-        $dummy = new Queue();
-        $dummy->id = 0;
-        $dummy->type = 'O';
-        $dummy->queue_number = 0;
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
@@ -96,9 +84,7 @@ class ApiController extends Controller
     public function getQueues() {
         // Mengambil antrian hari ini yang berjalan
         // return DB::transaction(function (){
-            $todayStart = now()->startOfDay()->toDateTimeString();
-            $todayEnd = now()->endOfDay()->toDateTimeString();
-            $queues = Queue::whereBetween('created_at', [$todayStart, $todayEnd])
+            $queues = Queue::whereDate('created_at', now()->toDateString())
                 ->orderBy('created_at', 'desc')
                 ->get();
                 
@@ -109,9 +95,7 @@ class ApiController extends Controller
     public function getLatestQueues() {
         // Mengambil antrian hari ini yang berjalan
         // return DB::transaction(function (){
-            $todayStart = now()->startOfDay()->toDateTimeString();
-            $todayEnd = now()->endOfDay()->toDateTimeString();
-            $queues = Queue::whereBetween('created_at', [$todayStart, $todayEnd])
+            $queues = Queue::whereDate('created_at', now()->toDateString())
                 ->orderBy('called_at', 'desc')
                 ->get();
                 
