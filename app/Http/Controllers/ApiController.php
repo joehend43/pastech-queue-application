@@ -281,7 +281,7 @@ class ApiController extends Controller
             $printer->getPrintConnector()->write("\x1B\x4A\x08");
             // Cetak Nomor Besar
             $printer->selectPrintMode(); // Reset
-            $printer->selectPrintMode(Printer::MODE_DOUBLE_WIDTH);
+            $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
             
             $printer->text($formattedNumber . "\n");
            
