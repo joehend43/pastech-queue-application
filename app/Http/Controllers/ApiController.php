@@ -46,16 +46,7 @@ class ApiController extends Controller
             'last_login' => now()
         ]);
 
-        $dummy = Queue::withTrashed()->find(1);
-        if (!$dummy) {
-            // Jika tidak ada antrian dengan ID 1, buat dummy baru dengan ID 1
-            $dummy = Queue::create([
-                'id' => 1,
-                'type' => 'O',
-                'queue_number' => 0,
-                'deleted_at' => now(),
-            ]);
-        }
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
@@ -68,16 +59,7 @@ class ApiController extends Controller
             'status' => 'Offline'
         ]);
 
-        $dummy = Queue::withTrashed()->find(1);
-        if (!$dummy) {
-            // Jika tidak ada antrian dengan ID 1, buat dummy baru dengan ID 1
-            $dummy = Queue::create([
-                'id' => 1,
-                'type' => 'O',
-                'queue_number' => 0,
-                'deleted_at' => now(),
-            ]);
-        }
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
@@ -93,16 +75,7 @@ class ApiController extends Controller
         } else {
             $user->update(['status' => 'Online', 'last_login' => now()]);
         }
-        $dummy = Queue::withTrashed()->find(1);
-        if (!$dummy) {
-            // Jika tidak ada antrian dengan ID 1, buat dummy baru dengan ID 1
-            $dummy = Queue::create([
-                'id' => 1,
-                'type' => 'O',
-                'queue_number' => 0,
-                'deleted_at' => now(),
-            ]);
-        }
+        $dummy = Queue::withTrashed()->first();
         broadcast(new QueueCalled($dummy, $user->name, $user->status))->toOthers();
 
         return response()->json($user);
