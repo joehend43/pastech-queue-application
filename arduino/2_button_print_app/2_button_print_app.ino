@@ -1,8 +1,8 @@
 // ======================================================
 // PIN
 // ======================================================
-const int redButtonPin = D5;    // print order
-const int greenButtonPin = D2;  // print pickup
+const int redButtonPin = D2;    // print order
+const int greenButtonPin = D5;  // print pickup
 
 // ======================================================
 // CONFIG

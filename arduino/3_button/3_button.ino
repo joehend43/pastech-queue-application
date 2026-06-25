@@ -5,7 +5,7 @@
 // ======================================================
 // DEVICE
 // ======================================================
-const int idDevice = 5;
+const int idDevice = 4;
 const String deviceType = "KASIR";
 
 unsigned long lastAlive = 0;
@@ -82,7 +82,7 @@ void setup() {
   Serial.println("LOG|Device= " + deviceType + " - " + String(idDevice) + " Is Ready");
 }
 
-void handleSerialCom(
+void handleSerialCom() {
   // Heartbeat setiap 5 detik
   if (millis() - lastAlive >= 5000) {
     lastAlive = millis();
@@ -100,7 +100,6 @@ void handleSerialCom(
     if (msg == "PING") {
       Serial.println("HELLO|" + String(idDevice) + "|" + deviceType);
     } else if (msg.startsWith("OK|")) {
-
       int p1 = msg.indexOf('|');
       int p2 = msg.indexOf('|', p1 + 1);
 
@@ -116,13 +115,13 @@ void handleSerialCom(
       Serial.println(
         "LOG|QUEUE=" + String(waiting));
 
-      digitalWrite(
-        ledRed,
-        waiting > 0);
-
-      digitalWrite(
-        ledGreen,
-        waiting == 0);
+      if (waiting > 0) {
+        digitalWrite(ledGreen, LOW);
+        digitalWrite(ledRed, HIGH);
+      } else {
+        digitalWrite(ledGreen, HIGH);
+        digitalWrite(ledRed, LOW);
+      }
     }
     // ===================
     // ERROR
@@ -132,15 +131,16 @@ void handleSerialCom(
       Serial.println(
         "LOG|ERROR=" + msg);
 
-      digitalWrite(ledRed, HIGH);
-      digitalWrite(ledGreen, HIGH);
+      digitalWrite(ledRed, LOW);
+      digitalWrite(ledGreen, LOW);
     }
-  })
+  }
+}
 
-  // ======================================================
-  // LOOP
-  // ======================================================
-  void loop() {
+// ======================================================
+// LOOP
+// ======================================================
+void loop() {
 
   handleSerialCom();
 

@@ -335,23 +335,26 @@ class ApiController extends Controller
 
             // --- Mulai Desain Struk Thermal ---
             $printer->setJustification(Printer::JUSTIFY_CENTER);
-
+            $printer->setFont(Printer::FONT_B);   
             // Cetak Tipe Antrian
             $printer->text(($type === 'A' ? "PEMBELIAN " : "PENGAMBILAN BARANG "));
             $printer->text($waktuCetak ."\n");
-            $printer->feed();
+            $printer->getPrintConnector()->write("\x1B\x4A\x08");
             // Cetak Nomor Besar
-            $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
-            $printer->text($formattedNumber . "\n");
             $printer->selectPrintMode(); // Reset
+            $printer->selectPrintMode(Printer::MODE_DOUBLE_WIDTH);
             
-            $printer->feed();
-            $printer->text("MOHON TIKET DISERTAKAN SAAT NOMER \n DIPANGGIL (PASTECH01).\n");
+            $printer->text($formattedNumber . "\n");
+           
+            $printer->selectPrintMode(); // Reset
+            $printer->getPrintConnector()->write("\x1B\x4A\x08");
+            $printer->setFont(Printer::FONT_B);
+            $printer->text("MOHON TIKET DISERTAKAN SAAT NOMER DIPANGGIL - PT01");
             
-            // $printer->feed(2); // Kasih jarak potongan kertas
+            $printer->feed(); // Kasih jarak potongan kertas
             
             // Perintah potong kertas (Auto-cutter) jika printer mendukung
-            $printer->cut();
+            $printer->cut(Printer::CUT_PARTIAL);
             
             // Tutup koneksi printer
             $printer->close();
