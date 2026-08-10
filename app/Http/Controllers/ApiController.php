@@ -37,9 +37,9 @@ class ApiController extends Controller
     public function loginUser(Request $request) {
         $user = User::findOrFail($request->id);
         
-        if ($user->status !== 'Offline') {
-            return response()->json(['message' => 'User sedang digunakan'], 400);
-        }
+        // if ($user->status !== 'Offline') {
+        //     return response()->json(['message' => 'User sedang digunakan'], 400);
+        // }
 
         $user->update([
             'status' => 'Online',

@@ -293,7 +293,7 @@
                         const btn = document.createElement('button');
                         btn.className = 'btn-user';
                         btn.innerText = user.status === 'Offline' ? user.name : `${user.name} (${user.status})`;
-                        if(user.status !== 'Offline') btn.disabled = true;
+                        // if(user.status !== 'Offline') btn.disabled = true;
                         btn.onclick = () => loginProcess(user.id);
                         container.appendChild(btn);
                     });
